@@ -65,14 +65,14 @@ export function ProblemBank() {
       {error ? <Notice tone="bad" title="Could not load the bank">{error}</Notice> : null}
       {list === null && !error ? <div className="grid gap-2"><Skeleton className="h-14" /><Skeleton className="h-14" /></div> : null}
       {list?.length === 0 ? (
-        <div className="rounded-ui border border-dashed border-line-strong px-6 py-14 text-center">
+        <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center">
           <p className="font-medium">The problem bank is empty</p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted">Write problems here with their test cases, then add them to any test from the test editor.</p>
         </div>
       ) : null}
 
       {shown.length ? (
-        <div className="overflow-hidden rounded-ui border border-line bg-surface">
+        <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
           {shown.map((p) => (
             <div key={p.id} className="grid grid-cols-[1fr_auto] items-center gap-4 border-t border-line px-4 py-3 first:border-t-0 sm:grid-cols-[1fr_90px_90px_120px_auto]">
               <div className="min-w-0">

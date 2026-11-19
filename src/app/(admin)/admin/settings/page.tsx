@@ -1,24 +1,34 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Microphone, Stop } from "@phosphor-icons/react/dist/ssr";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Gavel, Microphone, ShieldCheck, Stop, Target } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { ProctoringForm } from "@/components/admin/ProctoringForm";
-import { Button, Field, Input, Notice, Skeleton, Toggle } from "@/components/ui";
+import { Button, Card, Input, Notice, SectionCard, Segmented, SettingRow, Skeleton, Switch, cx } from "@/components/ui";
 import { api, ApiError } from "@/lib/client/api";
 import { LEVEL_LABELS, MIC_LEVELS, SENSITIVITY_LEVELS, asLevel, type ProctoringSettings, type SensitivityLevel } from "@/lib/shared/proctoring";
 
 interface Settings { default_proctoring: ProctoringSettings; lockout_enabled: boolean; pass_mark: number }
 
+type Tab = "proctoring" | "room" | "lockout" | "scoring";
+const TABS: { id: Tab; label: string; hint: string; icon: typeof Target }[] = [
+  { id: "proctoring", label: "Proctoring defaults", hint: "What new tests watch for", icon: ShieldCheck },
+  { id: "room", label: "Room check", hint: "Calibrate the microphone", icon: Microphone },
+  { id: "lockout", label: "Lockout", hint: "After a forced hand-in", icon: Gavel },
+  { id: "scoring", label: "Scoring", hint: "Pass mark", icon: Target },
+];
+
 /**
- * Live microphone meter for calibrating a room before a round (MyCodeBud's
- * SettingsTab). Reads the admin's own mic through the same processing the
- * proctor asks for and draws each level's threshold from MIC_LEVELS, the
- * numbers the engine strikes on. Nothing is recorded or sent anywhere.
+ * Live microphone meter for calibrating a room before a round. Reads the
+ * admin's own mic through the same processing the proctor asks for, and marks
+ * each sensitivity's threshold from MIC_LEVELS, the numbers the engine
+ * strikes on. Nothing is recorded or sent anywhere.
  */
-function MicMeter({ level }: { level: SensitivityLevel }) {
+function MicMeter() {
   const [on, setOn] = useState(false);
   const [rms, setRms] = useState(0);
+  const [peak, setPeak] = useState(0);
+  const [level, setLevel] = useState<SensitivityLevel>("medium");
   const [error, setError] = useState<string | null>(null);
   const stop = useRef<() => void>(() => {});
 
@@ -32,130 +42,218 @@ function MicMeter({ level }: { level: SensitivityLevel }) {
       ctx.createMediaStreamSource(stream).connect(analyser);
       const buf = new Float32Array(analyser.fftSize);
       let raf = 0;
-      const tick = () => {
+      let last = 0;
+      const tick = (t: number) => {
+        raf = requestAnimationFrame(tick);
+        if (t - last < 60) return;
+        last = t;
         analyser.getFloatTimeDomainData(buf);
         let sum = 0;
         for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
-        setRms(Math.sqrt(sum / buf.length));
-        raf = requestAnimationFrame(tick);
+        const v = Math.sqrt(sum / buf.length);
+        setRms(v);
+        setPeak((p) => Math.max(v, p * 0.97));
       };
-      tick();
+      raf = requestAnimationFrame(tick);
       stop.current = () => {
         cancelAnimationFrame(raf);
-        stream.getTracks().forEach((t) => t.stop());
+        stream.getTracks().forEach((tr) => tr.stop());
         ctx.close().catch(() => {});
         setOn(false);
         setRms(0);
+        setPeak(0);
       };
       setOn(true);
     } catch {
-      setError("Microphone access was refused.");
+      setError("Microphone access was refused. Allow it in the address bar and try again.");
     }
   }
   useEffect(() => () => stop.current(), []);
 
-  // 0..0.3 RMS mapped onto the bar; above that is shouting.
   const scale = (v: number) => Math.min(100, (v / 0.3) * 100);
-  const threshold = MIC_LEVELS[level].threshold;
+  const cfg = MIC_LEVELS[level];
+  const over = rms >= cfg.threshold;
+
   return (
-    <div className="rounded-ui border border-line bg-surface p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold">Microphone test meter</p>
-          <p className="text-xs text-muted">Run it in the exam room. If the bar keeps crossing the selected line while the room is quiet, choose a lower sensitivity.</p>
+    <SectionCard
+      title="Microphone room check"
+      description="Run this in the exam room with the class seated. If the level keeps crossing the line while the room is quiet, choose a lower sensitivity in Proctoring defaults."
+    >
+      <div className="py-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Segmented label="Sensitivity to preview" size="sm" value={level} onChange={setLevel} options={SENSITIVITY_LEVELS.map((l) => ({ value: l, label: LEVEL_LABELS[l] }))} />
+          <Button variant={on ? "secondary" : "primary"} size="sm" onClick={() => (on ? stop.current() : start())}>
+            {on ? <><Stop size={14} weight="fill" /> Stop</> : <><Microphone size={14} /> Start listening</>}
+          </Button>
         </div>
-        <Button size="sm" onClick={() => (on ? stop.current() : start())}>{on ? <><Stop size={14} /> Stop</> : <><Microphone size={14} /> Start meter</>}</Button>
+        {error ? <p className="mt-3 text-sm text-bad">{error}</p> : null}
+
+        <div className="relative mt-6 h-3 overflow-hidden rounded-full bg-sunken">
+          <div className={cx("h-full rounded-full transition-[width] duration-100", over ? "bg-warn" : "bg-accent")} style={{ width: `${scale(rms)}%` }} />
+          <div className="absolute inset-y-0 w-0.5 bg-ink/30" style={{ left: `${scale(peak)}%` }} />
+        </div>
+        <div className="relative mt-1 h-6">
+          <div className="absolute -top-4 h-5 w-0.5 rounded bg-ink" style={{ left: `${scale(cfg.threshold)}%` }} />
+          <span className="absolute top-1.5 -translate-x-1/2 text-[11px] font-medium text-ink" style={{ left: `${scale(cfg.threshold)}%` }}>
+            {LEVEL_LABELS[level]} line
+          </span>
+        </div>
+
+        <p className={cx("mt-3 text-sm", !on ? "text-muted" : over ? "text-warn" : "text-ok")}>
+          {!on ? "Not listening." : over ? "Above the line. Held this loud, it would record a warning." : "Below the line. This room would not trigger warnings."}
+        </p>
+        <p className="mt-1 text-xs text-muted">
+          At {LEVEL_LABELS[level]}, a warning needs the level above the line for {Math.round(cfg.fraction * 100)}% of {cfg.windowSeconds} seconds. Nothing is recorded or sent anywhere.
+        </p>
       </div>
-      {error ? <p className="mt-3 text-sm text-bad">{error}</p> : null}
-      <div className="relative mt-5 h-6 overflow-hidden rounded-ui border border-line bg-sunken">
-        <div className="h-full bg-accent/70 transition-[width] duration-75" style={{ width: `${scale(rms)}%` }} />
-        {SENSITIVITY_LEVELS.map((l) => (
-          <div key={l} className={l === level ? "absolute inset-y-0 w-0.5 bg-ink" : "absolute inset-y-0 w-px bg-line-strong"} style={{ left: `${scale(MIC_LEVELS[l].threshold)}%` }} title={`${LEVEL_LABELS[l]} threshold`} />
-        ))}
-      </div>
-      <div className="relative mt-1 h-4 text-[10px] text-muted">
-        {SENSITIVITY_LEVELS.map((l) => (
-          <span key={l} className={`absolute -translate-x-1/2 ${l === level ? "font-semibold text-ink" : ""}`} style={{ left: `${scale(MIC_LEVELS[l].threshold)}%` }}>{LEVEL_LABELS[l]}</span>
-        ))}
-      </div>
-      <p className="mt-3 text-xs text-muted">
-        At {LEVEL_LABELS[level]}, a warning needs the level above the line ({threshold}) for {Math.round(MIC_LEVELS[level].fraction * 100)}% of {MIC_LEVELS[level].windowSeconds} seconds.
-      </p>
-    </div>
+    </SectionCard>
   );
 }
 
+const LADDER: [string, string][] = [
+  ["1st", "15 minutes"], ["2nd", "1 hour"], ["3rd", "6 hours"], ["4th", "24 hours"], ["5th", "Barred until appeal"],
+];
+
 export default function SettingsPage() {
+  const [saved, setSaved] = useState<Settings | null>(null);
   const [s, setS] = useState<Settings | null>(null);
-  const [saving, setSaving] = useState<"save" | "apply" | null>(null);
+  const [tab, setTab] = useState<Tab>("proctoring");
+  const [applyRunning, setApplyRunning] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState<string | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<{ settings: Settings }>("/api/admin/settings").then((r) => setS(r.settings)).catch((e) => setError(e instanceof ApiError ? e.message : "Could not load settings."));
+    api.get<{ settings: Settings }>("/api/admin/settings")
+      .then((r) => { setS(r.settings); setSaved(r.settings); })
+      .catch((e) => setError(e instanceof ApiError ? e.message : "Could not load settings."));
   }, []);
 
-  async function save(apply: boolean) {
+  useEffect(() => {
+    if (!flash) return;
+    const t = window.setTimeout(() => setFlash(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [flash]);
+
+  const dirty = useMemo(() => !!s && !!saved && JSON.stringify(s) !== JSON.stringify(saved), [s, saved]);
+
+  async function save() {
     if (!s) return;
-    setSaving(apply ? "apply" : "save");
+    setSaving(true);
     setError(null);
     try {
-      const r = await api.put<{ settings: Settings; applied: number }>("/api/admin/settings", { ...s, apply_to_tests: apply });
+      const r = await api.put<{ settings: Settings; applied: number }>("/api/admin/settings", { ...s, apply_to_tests: applyRunning });
       setS(r.settings);
-      setSaved(apply ? `Saved, and applied to ${r.applied} test${r.applied === 1 ? "" : "s"} that have not ended.` : "Saved. New tests start from these settings.");
+      setSaved(r.settings);
+      setFlash(applyRunning ? `Saved and applied to ${r.applied} test${r.applied === 1 ? "" : "s"} that have not ended.` : "Settings saved.");
+      setApplyRunning(false);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not save.");
     } finally {
-      setSaving(null);
+      setSaving(false);
     }
   }
 
-  if (!s) return <div><PageHeader title="Settings" />{error ? <Notice tone="bad" title="Could not load">{error}</Notice> : <Skeleton className="h-96" />}</div>;
-
   return (
     <div>
-      <PageHeader title="Settings" subtitle="Proctoring defaults, the lockout ladder and scoring." />
-      <div className="grid gap-8">
-        <section>
-          <h2 className="mb-1 text-base font-semibold">Default proctoring</h2>
-          <p className="mb-4 text-sm text-muted">Every new test starts from these. Each test can still be changed on its own page.</p>
-          <ProctoringForm value={s.default_proctoring} onChange={(v) => setS({ ...s, default_proctoring: v })} proctored setProctored={() => {}} hideMaster />
-        </section>
+      <PageHeader title="Settings" subtitle="Defaults for new tests, the lockout rule, and how passing is scored." />
+      {!s ? (error ? <Notice tone="bad" title="Could not load settings">{error}</Notice> : <Skeleton className="h-96" />) : (
+        <div className="grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)]">
+          <nav aria-label="Settings sections" className="flex gap-1 overflow-x-auto lg:sticky lg:top-9 lg:flex-col lg:self-start">
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              const on = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  aria-current={on ? "page" : undefined}
+                  className={cx(
+                    "flex shrink-0 items-center gap-3 rounded-ui px-3 py-2.5 text-left transition-colors",
+                    on ? "bg-surface shadow-card ring-1 ring-line" : "hover:bg-sunken",
+                  )}
+                >
+                  <span className={cx("grid h-8 w-8 shrink-0 place-items-center rounded-ui", on ? "bg-accent-soft text-accent" : "bg-sunken text-muted")}>
+                    <Icon size={17} weight={on ? "fill" : "regular"} />
+                  </span>
+                  <span className="leading-tight">
+                    <span className={cx("block text-sm", on ? "font-semibold text-ink" : "font-medium text-ink-2")}>{t.label}</span>
+                    <span className="hidden text-xs text-muted lg:block">{t.hint}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
 
-        <MicMeter level={asLevel(s.default_proctoring.mic_sensitivity)} />
+          <div className="min-w-0">
+            {tab === "proctoring" ? (
+              <>
+                <Notice tone="accent">Every new test starts from these defaults. A test can still be changed on its own page.</Notice>
+                <div className="mt-5">
+                  <ProctoringForm value={s.default_proctoring} onChange={(v) => setS({ ...s, default_proctoring: v })} proctored setProctored={() => {}} hideMaster />
+                </div>
+              </>
+            ) : null}
 
-        <section className="rounded-ui border border-line bg-surface p-5">
-          <h2 className="text-base font-semibold">Lockout after a forced hand-in</h2>
-          <Toggle
-            checked={s.lockout_enabled}
-            onChange={(v) => setS({ ...s, lockout_enabled: v })}
-            label="Escalating cooldown"
-            description="When the proctor hands a test in at the violation limit, the student cannot start another proctored test for a while."
-          />
-          <ol className="mt-3 grid gap-px overflow-hidden rounded-ui border border-line bg-line text-sm sm:grid-cols-5">
-            {[["1st", "15 minutes"], ["2nd", "1 hour"], ["3rd", "6 hours"], ["4th", "24 hours"], ["5th", "Barred until an appeal is approved"]].map(([n, v]) => (
-              <li key={n} className="bg-bg px-3 py-2.5"><span className="block text-xs text-muted">{n} strike</span>{v}</li>
-            ))}
-          </ol>
-          <p className="mt-2 text-xs text-muted">Strikes stop counting after 30 days. A test already in progress is never interrupted by a cooldown.</p>
-        </section>
+            {tab === "room" ? <MicMeter /> : null}
 
-        <section className="rounded-ui border border-line bg-surface p-5">
-          <h2 className="text-base font-semibold">Scoring</h2>
-          <Field label="Pass mark (%)" hint="Used for pass rates, pass and fail on result sheets, and reports." className="mt-3 max-w-xs">
-            {(id) => <Input id={id} type="number" min={1} max={100} value={s.pass_mark} onChange={(e) => setS({ ...s, pass_mark: Number(e.target.value) })} />}
-          </Field>
-        </section>
+            {tab === "lockout" ? (
+              <SectionCard title="Lockout after a forced hand-in" description="When the proctor hands a test in at the violation limit, the student waits before starting another proctored test.">
+                <SettingRow label="Escalating cooldown" description="A test already in progress is never interrupted. Strikes stop counting after 30 days.">
+                  <Switch label="Escalating cooldown" checked={s.lockout_enabled} onChange={(v) => setS({ ...s, lockout_enabled: v })} />
+                </SettingRow>
+                <div className={cx("py-5", !s.lockout_enabled && "opacity-50")}>
+                  <ol className="grid gap-3 sm:grid-cols-5">
+                    {LADDER.map(([n, v], i) => (
+                      <li key={n} className={cx("rounded-ui border px-3 py-3", i === 4 ? "border-bad/30 bg-bad-soft" : "border-line bg-raised")}>
+                        <span className="block text-xs text-muted">{n} strike</span>
+                        <span className={cx("mt-1 block text-sm font-semibold", i === 4 ? "text-bad" : "text-ink")}>{v}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="mt-3 text-xs text-muted">Barred students appeal from their dashboard. Appeals are decided under Ban Appeals.</p>
+                </div>
+              </SectionCard>
+            ) : null}
 
-        <div className="sticky bottom-0 z-20 border-t border-line bg-bg/95 py-4 backdrop-blur">
-          {error ? <p className="mb-2 text-sm text-bad">{error}</p> : null}
-          {saved ? <p className="mb-2 text-sm text-ok">{saved}</p> : null}
-          <div className="flex flex-wrap gap-2">
-            <Button variant="primary" busy={saving === "save"} disabled={!!saving} onClick={() => save(false)}>Save settings</Button>
-            <Button busy={saving === "apply"} disabled={!!saving} onClick={() => save(true)}>Save and apply to current tests</Button>
+            {tab === "scoring" ? (
+              <SectionCard title="Scoring" description="Used for pass rates, pass and fail on result sheets, and reports.">
+                <SettingRow label="Pass mark" description="A student passes a test at or above this share of its marks.">
+                  <span className="flex items-center gap-2">
+                    <Input type="number" aria-label="Pass mark" min={1} max={100} value={s.pass_mark} onChange={(e) => setS({ ...s, pass_mark: Number(e.target.value) })} className="h-9 w-20 text-center tabular" />
+                    <span className="text-[13px] text-muted">percent</span>
+                  </span>
+                </SettingRow>
+              </SectionCard>
+            ) : null}
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Floating save bar: only when something changed. */}
+      {s && (dirty || flash || error) ? (
+        <div className="fixed inset-x-0 bottom-5 z-40 flex justify-center px-4 lg:pl-[248px]">
+          <Card className="flex w-full max-w-2xl flex-wrap items-center gap-x-5 gap-y-3 px-4 py-3 shadow-pop">
+            {dirty ? (
+              <>
+                <span className="text-sm font-medium text-ink">Unsaved changes</span>
+                {tab === "proctoring" ? (
+                  <label className="flex cursor-pointer items-center gap-2 text-[13px] text-ink-2">
+                    <input type="checkbox" checked={applyRunning} onChange={(e) => setApplyRunning(e.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
+                    Also apply to tests that have not ended
+                  </label>
+                ) : null}
+                <span className="ml-auto flex gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => { setS(saved); setApplyRunning(false); }} disabled={saving}>Discard</Button>
+                  <Button size="sm" variant="primary" busy={saving} onClick={save}>Save changes</Button>
+                </span>
+              </>
+            ) : (
+              <span className={cx("text-sm", error ? "text-bad" : "text-ok")}>{error || flash}</span>
+            )}
+          </Card>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/admin/AdminShell";
-import { Badge, Button, Notice, Select, Skeleton, Textarea } from "@/components/ui";
+import { Badge, Button, Person, Notice, Select, Skeleton, Textarea } from "@/components/ui";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 
 interface Appeal {
@@ -37,8 +37,7 @@ function AppealCard({ a, onDone }: { a: Appeal; onDone: () => void }) {
     <article className="rounded-ui border border-line bg-surface">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
         <div>
-          <p className="font-medium">{a.name} <span className="font-mono text-xs text-muted">{a.username}</span></p>
-          <p className="text-xs text-muted">Appealed {formatWhen(a.created_at)} with {a.strike_count} active strikes</p>
+          <Person name={a.name} sub={`${a.username} | appealed ${formatWhen(a.created_at)} with ${a.strike_count} active strikes`} size={38} />
         </div>
         <Badge tone={a.status === "pending" ? "warn" : a.status === "approved" ? "ok" : "bad"}>{a.status[0].toUpperCase() + a.status.slice(1)}</Badge>
       </div>
@@ -107,7 +106,7 @@ export default function AppealsPage() {
       {error ? <Notice tone="bad" title="Could not load">{error}</Notice> : null}
       {list === null && !error ? <Skeleton className="h-40" /> : null}
       {list?.length === 0 ? (
-        <div className="rounded-ui border border-dashed border-line-strong px-6 py-14 text-center">
+        <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center">
           <p className="font-medium">No {status === "all" ? "" : status} appeals</p>
           <p className="mt-1 text-sm text-muted">A barred student can appeal from their dashboard.</p>
         </div>

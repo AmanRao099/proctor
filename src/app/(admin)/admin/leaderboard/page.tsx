@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DownloadSimple, MagnifyingGlass, Trophy } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { ResultsBoard, downloadText } from "@/components/admin/ResultsBoard";
-import { Button, Input, Notice, Select, Skeleton, cx } from "@/components/ui";
+import { Button, Input, Person, Notice, Select, Skeleton, cx } from "@/components/ui";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 
 interface Row {
@@ -65,7 +65,7 @@ export default function LeaderboardPage() {
             <Button size="sm" className="ml-auto" onClick={exportCsv} disabled={!data.rows.length}><DownloadSimple size={14} /> CSV</Button>
           </div>
           {data.rows.length === 0 ? (
-            <div className="rounded-ui border border-dashed border-line-strong px-6 py-14 text-center">
+            <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center">
               <p className="font-medium">No rankings yet</p>
               <p className="mt-1 text-sm text-muted">The board fills in as students sit tests.</p>
             </div>
@@ -77,15 +77,15 @@ export default function LeaderboardPage() {
                     <p className="flex items-center gap-1.5 text-xs text-muted"><Trophy size={14} weight={r.rank === 1 ? "fill" : "regular"} className={r.rank === 1 ? "text-accent" : ""} /> Rank {r.rank}</p>
                     <p className="mt-2 truncate font-semibold">{r.name}</p>
                     <p className="font-mono text-xs text-muted">{r.username}</p>
-                    <p className="mt-3 font-mono text-2xl font-semibold tabular">{r.percent}%</p>
+                    <p className="mt-3 text-2xl font-semibold tabular">{r.percent}%</p>
                     <p className="text-xs text-muted">{r.marks_obtained}/{r.marks_possible} marks over {r.tests_taken} test{r.tests_taken === 1 ? "" : "s"}</p>
                   </div>
                 ))}
               </div>
-              <div className="overflow-x-auto rounded-ui border border-line bg-surface">
-                <table className="w-full min-w-[760px] text-sm">
+              <div className="overflow-x-auto rounded-card border border-line bg-surface shadow-card">
+                <table className="data-table min-w-[760px]">
                   <thead>
-                    <tr className="border-b border-line text-left text-xs text-muted">
+                    <tr>
                       <th className="w-14 px-4 py-3 font-medium">Rank</th>
                       <th className="px-3 py-3 font-medium">Student</th>
                       <th className="px-3 py-3 text-right font-medium">Score</th>
@@ -98,15 +98,15 @@ export default function LeaderboardPage() {
                   </thead>
                   <tbody>
                     {rows.map((r) => (
-                      <tr key={r.user_id} className="border-t border-line first:border-t-0">
-                        <td className="px-4 py-3 font-mono text-xs tabular">{r.rank}</td>
-                        <td className="px-3 py-3"><p className="font-medium">{r.name}</p><p className="font-mono text-xs text-muted">{r.username}</p></td>
-                        <td className="px-3 py-3 text-right font-mono tabular">{r.percent}%</td>
-                        <td className="px-3 py-3 text-right font-mono text-xs tabular">{r.marks_obtained}<span className="text-muted">/{r.marks_possible}</span></td>
-                        <td className="px-3 py-3 text-right font-mono text-xs tabular">{r.tests_taken}<span className="text-muted"> ({r.tests_passed} passed)</span></td>
-                        <td className="px-3 py-3 text-right font-mono text-xs tabular">{r.solved}/{r.problems}</td>
-                        <td className="px-3 py-3 text-right font-mono text-xs tabular">{r.best_percent}%</td>
-                        <td className={cx("px-4 py-3 text-right font-mono text-xs tabular", r.auto_submitted ? "text-bad" : r.violations ? "text-warn" : "text-muted")}>
+                      <tr key={r.user_id} className="">
+                        <td className="px-4 py-3 text-xs tabular">{r.rank}</td>
+                        <td className="px-3 py-3"><Person name={r.name} sub={r.username} /></td>
+                        <td className="px-3 py-3 text-right tabular">{r.percent}%</td>
+                        <td className="px-3 py-3 text-right text-xs tabular">{r.marks_obtained}<span className="text-muted">/{r.marks_possible}</span></td>
+                        <td className="px-3 py-3 text-right text-xs tabular">{r.tests_taken}<span className="text-muted"> ({r.tests_passed} passed)</span></td>
+                        <td className="px-3 py-3 text-right text-xs tabular">{r.solved}/{r.problems}</td>
+                        <td className="px-3 py-3 text-right text-xs tabular">{r.best_percent}%</td>
+                        <td className={cx("px-4 py-3 text-right text-xs tabular", r.auto_submitted ? "text-bad" : r.violations ? "text-warn" : "text-muted")}>
                           {r.violations}{r.auto_submitted ? ` (${r.auto_submitted} auto)` : ""}
                         </td>
                       </tr>

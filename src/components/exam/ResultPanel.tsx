@@ -47,7 +47,7 @@ function CaseRow({ r, open, onToggle }: { r: CaseResult; open: boolean; onToggle
         <span className="text-ink">{r.hidden ? "Hidden test" : "Test"} {r.index + 1}</span>
         {r.hidden ? <LockSimple size={13} className="text-muted" /> : null}
         <span className={cx("ml-auto text-xs", pass ? "text-muted" : "text-bad")}>{STATUS_LABEL[r.status]}</span>
-        <span className="w-16 text-right font-mono text-xs text-muted tabular">{r.time_ms} ms</span>
+        <span className="w-16 text-right text-xs text-muted tabular">{r.time_ms} ms</span>
       </button>
       {open && !r.hidden ? (
         <div className="grid gap-3 px-4 pb-4 sm:grid-cols-3">
@@ -71,7 +71,7 @@ function JudgeView({ result, submit }: { result: JudgeResult; submit: boolean })
         <p className={cx("text-sm font-semibold", all ? "text-ok" : result.status === "judge_error" ? "text-warn" : "text-bad")}>
           {all ? (submit ? "Accepted" : "Sample tests passed") : STATUS_LABEL[result.status]}
         </p>
-        <p className="font-mono text-xs text-muted tabular">
+        <p className="text-xs text-muted tabular">
           {result.passed}/{result.total} passed{submit ? ` | ${result.marks_obtained}/${result.marks} marks` : ""}
         </p>
         {!submit && all ? <p className="text-xs text-muted">Submit to run the hidden tests.</p> : null}
@@ -103,14 +103,14 @@ export function ResultPanel({
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex h-9 shrink-0 items-center gap-1 border-b border-line px-2">
+      <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line px-3">
         {(["result", "custom"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={cx(
-              "h-7 rounded-ui px-2.5 text-[13px]",
-              tab === t ? "bg-sunken text-ink" : "text-muted hover:text-ink",
+              "h-7 rounded-full px-3 text-[13px] font-medium transition-colors",
+              tab === t ? "bg-accent-soft text-accent" : "text-muted hover:bg-sunken hover:text-ink",
             )}
           >
             {t === "result" ? "Result" : "Custom input"}

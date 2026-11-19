@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft, ArrowsOut, Browser, Camera, Check, Clock, Code, Microphone, Warning, X,
+  ArrowLeft, ArrowsOut, Browser, Camera, Check, Clock, Code, Microphone, UserFocus, Warning, X,
 } from "@phosphor-icons/react/dist/ssr";
 import { Wordmark } from "@/components/TopBar";
 import { Button, Notice, Skeleton, cx } from "@/components/ui";
@@ -38,11 +38,11 @@ function StepIcon({ state, icon: Icon }: { state: StepState; icon: typeof Camera
   return (
     <span
       className={cx(
-        "grid h-8 w-8 shrink-0 place-items-center rounded-ui border",
-        state === "done" && "border-ok bg-ok-soft text-ok",
+        "relative z-10 grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 bg-surface",
+        state === "done" && "border-ok bg-ok text-white",
         state === "failed" && "border-bad bg-bad-soft text-bad",
-        state === "active" && "border-ink bg-surface text-ink",
-        state === "todo" && "border-line bg-surface text-muted",
+        state === "active" && "border-accent text-accent",
+        state === "todo" && "border-line text-muted",
       )}
     >
       {state === "done" ? <Check size={16} weight="bold" /> : state === "failed" ? <X size={16} weight="bold" /> : <Icon size={16} />}
@@ -52,9 +52,9 @@ function StepIcon({ state, icon: Icon }: { state: StepState; icon: typeof Camera
 
 function Step({ state, icon, title, children }: { state: StepState; icon: typeof Camera; title: string; children?: React.ReactNode }) {
   return (
-    <li className="grid grid-cols-[32px_1fr] gap-4">
+    <li className="relative grid grid-cols-[36px_1fr] gap-4 pb-6 last:pb-0 [&:not(:last-child)]:before:absolute [&:not(:last-child)]:before:left-[17px] [&:not(:last-child)]:before:top-9 [&:not(:last-child)]:before:h-[calc(100%-36px)] [&:not(:last-child)]:before:w-0.5 [&:not(:last-child)]:before:bg-line">
       <StepIcon state={state} icon={icon} />
-      <div className="min-w-0 pt-1">
+      <div className="min-w-0 pt-1.5">
         <p className={cx("text-sm font-medium", state === "todo" ? "text-muted" : "text-ink")}>{title}</p>
         {children ? <div className="mt-2 text-sm text-ink-2">{children}</div> : null}
       </div>
@@ -71,6 +71,7 @@ export default function CheckPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
   const [supported, setSupported] = useState(true);
+  const [browser, setBrowser] = useState("");
 
   const [camState, setCamState] = useState<StepState>("active");
   const [camError, setCamError] = useState<string | null>(null);
@@ -84,6 +85,7 @@ export default function CheckPage() {
   useEffect(() => {
     setMobile(isMobileDevice());
     setSupported(isSupportedBrowser());
+    setBrowser(browserName());
     api.get<{ test: Brief; proctoring: ProctoringSettings }>(`/api/tests/${id}`)
       .then((res) => { setBrief(res.test); setSettings(res.proctoring); })
       .catch((err) => setLoadError(err instanceof ApiError ? err.message : "Could not load this test."));
@@ -147,8 +149,8 @@ export default function CheckPage() {
 
   return (
     <div className="min-h-[100dvh]">
-      <header className="border-b border-line">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
+      <header className="border-b border-line bg-surface">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
           <Wordmark />
           <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
             <ArrowLeft size={14} /> Back to tests
@@ -164,7 +166,7 @@ export default function CheckPage() {
           ) : null}
           {brief ? (
             <>
-              <h1 className="text-2xl font-semibold tracking-tight">{brief.title}</h1>
+              <h1 className="text-[28px] font-semibold tracking-tight">{brief.title}</h1>
               <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-2">
                 <div className="flex items-center gap-1.5"><Clock size={15} className="text-muted" />{brief.duration_minutes} minutes</div>
                 <div className="flex items-center gap-1.5"><Code size={15} className="text-muted" />{brief.problem_count} problem{brief.problem_count === 1 ? "" : "s"}, {brief.total_marks} marks</div>
@@ -172,16 +174,16 @@ export default function CheckPage() {
               <p className="mt-1 text-xs text-muted">Window closes {formatWhen(brief.ends_at)}. Your timer cannot run past that.</p>
 
               {brief.instructions ? (
-                <div className="mt-8">
-                  <h2 className="text-sm font-medium text-muted">Instructions</h2>
+                <div className="mt-8 rounded-card border border-line bg-surface p-5 shadow-card">
+                  <h2 className="text-[15px] font-semibold">Instructions</h2>
                   <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-ink-2">{brief.instructions}</p>
                 </div>
               ) : null}
 
               {brief.proctored && settings ? (
-                <div className="mt-8">
-                  <h2 className="text-sm font-medium text-muted">How this test is proctored</h2>
-                  <ul className="mt-3 grid gap-2 text-sm text-ink-2">
+                <div className="mt-4 rounded-card border border-line bg-surface p-5 shadow-card">
+                  <h2 className="text-[15px] font-semibold">How this test is proctored</h2>
+                  <ul className="mt-3 grid gap-2.5 text-sm text-ink-2 [&>li]:relative [&>li]:pl-4 [&>li]:before:absolute [&>li]:before:left-0 [&>li]:before:top-[8px] [&>li]:before:h-1.5 [&>li]:before:w-1.5 [&>li]:before:rounded-full [&>li]:before:bg-accent">
                     {settings.require_fullscreen ? <li>The test runs in fullscreen. Leaving it is recorded.</li> : null}
                     {settings.tab_switch_enabled ? <li>Switching tabs or apps is recorded.</li> : null}
                     {cameraNeeded ? <li>Your camera watches for your face{settings.multi_person_detection_enabled ? ", for other people" : ""}{settings.phone_detection_enabled ? " and for a phone" : ""}.</li> : null}
@@ -198,10 +200,11 @@ export default function CheckPage() {
         </section>
 
         <section className="min-w-0">
-          <div className="rounded-ui border border-line bg-surface p-5 sm:p-6">
-            <h2 className="font-semibold tracking-tight">System check</h2>
-            <ol className="mt-6 grid gap-6">
-              <Step state={mobile ? "failed" : "done"} icon={Browser} title={mobile ? "This device cannot sit the test" : `Browser: ${browserName()}`}>
+          <div className="rounded-card border border-line bg-surface p-6 shadow-card sm:p-6">
+            <h2 className="text-[17px] font-semibold tracking-tight">System check</h2>
+            <p className="mt-1 text-[13px] text-muted">Three quick steps, then the paper opens.</p>
+            <ol className="mt-6 grid">
+              <Step state={mobile ? "failed" : "done"} icon={Browser} title={mobile ? "This device cannot sit the test" : browser ? `Browser: ${browser}` : "Browser"}>
                 {mobile ? "Open this page on a laptop or desktop computer." : !supported ? (
                   <span className="text-warn">Chrome or Edge is recommended. Camera checks may not work reliably here.</span>
                 ) : null}
@@ -221,7 +224,7 @@ export default function CheckPage() {
               ) : null}
 
               {cameraNeeded ? (
-                <Step state={faceState} icon={Camera} title="Face check">
+                <Step state={faceState} icon={UserFocus} title="Face check">
                   {faceState === "active" ? <p>Look at the screen for a few seconds.</p> : null}
                   {faceState === "failed" ? (
                     <div className="grid gap-3">
@@ -263,11 +266,11 @@ export default function CheckPage() {
               ) : null}
               {startError ? <p className="mt-4 text-sm text-bad">{startError}</p> : null}
 
-              <Button variant="primary" className="mt-5 w-full" disabled={!ready} busy={starting} onClick={start}>
+              <Button variant="primary" className="mt-5 h-11 w-full" disabled={!ready} busy={starting} onClick={start}>
                 {brief?.state === "in_progress" ? "Resume test" : "Start test"}
               </Button>
-              {brief?.state !== "in_progress" ? (
-                <p className="mt-2 text-center text-xs text-muted">Your {brief?.duration_minutes ?? ""} minute timer starts when the paper opens.</p>
+              {brief && brief.state !== "in_progress" ? (
+                <p className="mt-2 text-center text-xs text-muted">Your {brief.duration_minutes} minute timer starts when the paper opens.</p>
               ) : null}
             </div>
           </div>

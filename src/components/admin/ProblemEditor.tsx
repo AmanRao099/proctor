@@ -53,13 +53,13 @@ export function ProblemEditor({
   }
 
   return (
-    <div className="rounded-ui border border-line bg-surface">
+    <div className="rounded-card border border-line bg-surface shadow-card">
       <div className="flex items-center gap-3 px-4 py-3">
         <button type="button" onClick={() => setOpen(!open)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
           {open ? <CaretDown size={14} className="text-muted" /> : <CaretRight size={14} className="text-muted" />}
-          <span className="font-mono text-xs text-muted">{index + 1}</span>
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-sunken text-xs font-medium text-ink-2">{index + 1}</span>
           <span className="truncate font-medium">{problem.title || "Untitled problem"}</span>
-          <span className="ml-auto hidden shrink-0 font-mono text-xs text-muted sm:inline">
+          <span className="ml-auto hidden shrink-0 text-xs text-muted sm:inline">
             {problem.difficulty || "Medium"} | {problem.marks} marks | {visible} sample, {hidden} hidden
           </span>
         </button>

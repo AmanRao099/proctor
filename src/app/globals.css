@@ -1,82 +1,103 @@
 @import "tailwindcss";
 
 /*
- * Tokens. One accent (cobalt), zinc neutrals, one radius (6px) for every
- * control and panel. Light and dark both defined; the system decides, and
- * data-theme can force either.
+ * Tokens. Palette: #2F3E46 ink, #354F52 hover, #52796F accent,
+ * #84A98C dark-mode accent, #CAD2C5 lines and tints. Shape rule: controls 8px
+ * (--r), cards and panels 12px (--r-lg), pills fully round. Light and dark
+ * both defined; the system decides, and data-theme can force either.
  */
 :root {
-  --bg: #f3f4f3;
-  --surface: #fcfcfc;
-  --sunken: #ececeb;
-  --ink: #18181b;
-  --ink-2: #3f3f46;
-  --muted: #62626a;
-  --line: #dededb;
-  --line-strong: #c4c4c0;
-  --accent: #2440c9;
+  --bg: #f3f5f2;
+  --surface: #ffffff;
+  --raised: #f8faf7;
+  --sunken: #edf1eb;
+  --ink: #2f3e46;
+  --ink-2: #3f5258;
+  --muted: #5f6f72;
+  --line: #e1e7de;
+  --line-strong: #cad2c5;
+  --accent: #52796f;
+  --accent-hover: #354f52;
   --accent-ink: #ffffff;
-  --accent-soft: #e6eaff;
-  --ok: #1a7343;
-  --ok-soft: #e3f3ea;
-  --warn: #965407;
-  --warn-soft: #fbf0dc;
-  --bad: #b42318;
-  --bad-soft: #fbe6e4;
+  --accent-soft: #e9f0ea;
+  --accent-line: #c3d5c8;
+  --ok: #2e7d4f;
+  --ok-soft: #e8f4ec;
+  --warn: #9a5b12;
+  --warn-soft: #fbf2e3;
+  --bad: #b03f2a;
+  --bad-soft: #fbece8;
   --editor: #ffffff;
-  --r: 6px;
+  --shadow-sm: 0 1px 2px rgb(47 62 70 / 0.06);
+  --shadow-md: 0 1px 3px rgb(47 62 70 / 0.07), 0 4px 12px rgb(47 62 70 / 0.06);
+  --shadow-lg: 0 12px 32px rgb(47 62 70 / 0.18);
+  --r: 8px;
+  --r-lg: 12px;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #111113;
-    --surface: #18181b;
-    --sunken: #0c0c0e;
-    --ink: #ececee;
-    --ink-2: #c9c9ce;
-    --muted: #9a9aa3;
-    --line: #2a2a30;
-    --line-strong: #3b3b42;
-    --accent: #8197ff;
-    --accent-ink: #0f1330;
-    --accent-soft: #1c2246;
-    --ok: #55c98a;
-    --ok-soft: #12271b;
-    --warn: #e7a843;
-    --warn-soft: #2a2010;
-    --bad: #f27b70;
-    --bad-soft: #2c1513;
-    --editor: #141417;
+    --bg: #1b2429;
+    --surface: #222e34;
+    --raised: #28363c;
+    --sunken: #172025;
+    --ink: #e9eee7;
+    --ink-2: #cad2c5;
+    --muted: #93a39c;
+    --line: #32424a;
+    --line-strong: #435359;
+    --accent: #84a98c;
+    --accent-hover: #9dbca4;
+    --accent-ink: #1b2429;
+    --accent-soft: #2a3b37;
+    --accent-line: #3f5a52;
+    --ok: #86c99f;
+    --ok-soft: #1f3329;
+    --warn: #e0b25a;
+    --warn-soft: #3a2f1a;
+    --bad: #ec8a75;
+    --bad-soft: #3d2420;
+    --editor: #1e292e;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 1px 3px rgb(0 0 0 / 0.35), 0 4px 12px rgb(0 0 0 / 0.25);
+    --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.5);
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #111113;
-  --surface: #18181b;
-  --sunken: #0c0c0e;
-  --ink: #ececee;
-  --ink-2: #c9c9ce;
-  --muted: #9a9aa3;
-  --line: #2a2a30;
-  --line-strong: #3b3b42;
-  --accent: #8197ff;
-  --accent-ink: #0f1330;
-  --accent-soft: #1c2246;
-  --ok: #55c98a;
-  --ok-soft: #12271b;
-  --warn: #e7a843;
-  --warn-soft: #2a2010;
-  --bad: #f27b70;
-  --bad-soft: #2c1513;
-  --editor: #141417;
+  --bg: #1b2429;
+  --surface: #222e34;
+  --raised: #28363c;
+  --sunken: #172025;
+  --ink: #e9eee7;
+  --ink-2: #cad2c5;
+  --muted: #93a39c;
+  --line: #32424a;
+  --line-strong: #435359;
+  --accent: #84a98c;
+  --accent-hover: #9dbca4;
+  --accent-ink: #1b2429;
+  --accent-soft: #2a3b37;
+  --accent-line: #3f5a52;
+  --ok: #86c99f;
+  --ok-soft: #1f3329;
+  --warn: #e0b25a;
+  --warn-soft: #3a2f1a;
+  --bad: #ec8a75;
+  --bad-soft: #3d2420;
+  --editor: #1e292e;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 1px 3px rgb(0 0 0 / 0.35), 0 4px 12px rgb(0 0 0 / 0.25);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.5);
   color-scheme: dark;
 }
 
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
+  --color-raised: var(--raised);
   --color-sunken: var(--sunken);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
@@ -84,8 +105,10 @@
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
@@ -93,6 +116,10 @@
   --color-bad: var(--bad);
   --color-bad-soft: var(--bad-soft);
   --radius-ui: var(--r);
+  --radius-card: var(--r-lg);
+  --shadow-card: var(--shadow-sm);
+  --shadow-raised: var(--shadow-md);
+  --shadow-pop: var(--shadow-lg);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
@@ -105,7 +132,8 @@ body {
 
 body {
   font-family: var(--font-sans);
-  font-feature-settings: "ss01", "cv11";
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -115,13 +143,57 @@ body {
   color: var(--ink);
 }
 
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 }
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+@layer components {
+/* Data tables: one look everywhere. */
+.data-table {
+  width: 100%;
+  font-size: 13.5px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.data-table thead th {
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.data-table thead th:first-child,
+.data-table tbody td:first-child {
+  padding-left: 20px;
+}
+.data-table thead th:last-child,
+.data-table tbody td:last-child {
+  padding-right: 20px;
+}
+.data-table tbody td {
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  vertical-align: middle;
+}
+.data-table tbody tr:first-child td {
+  border-top: 0;
+}
+.data-table tbody tr.is-clickable {
+  cursor: pointer;
+}
+.data-table tbody tr.is-clickable:hover td {
+  background: var(--raised);
+}
 }
 
 /* Problem statements: plain text with light structure, no markdown engine. */
@@ -134,7 +206,7 @@ body {
   font-size: 0.85em;
   background: var(--sunken);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 5px;
   padding: 0.05rem 0.3rem;
 }
 

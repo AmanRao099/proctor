@@ -49,7 +49,7 @@ export function TestsList() {
       ) : null}
 
       {rows?.length === 0 ? (
-        <div className="rounded-ui border border-dashed border-line-strong px-6 py-16 text-center">
+        <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-16 text-center">
           <p className="font-medium">No tests yet</p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted">Create a test, add problems with test cases, assign candidates, then publish it.</p>
           <Link href="/admin/tests/new" className="mt-6 inline-block"><Button variant="primary"><Plus size={16} /> New test</Button></Link>
@@ -57,10 +57,10 @@ export function TestsList() {
       ) : null}
 
       {rows?.length ? (
-        <div className="overflow-x-auto rounded-ui border border-line bg-surface">
-          <table className="w-full min-w-[760px] text-sm">
+        <div className="overflow-x-auto rounded-card border border-line bg-surface shadow-card">
+          <table className="data-table min-w-[760px]">
             <thead>
-              <tr className="border-b border-line text-left text-xs text-muted">
+              <tr>
                 <th className="px-5 py-3 font-medium">Test</th>
                 <th className="px-3 py-3 font-medium">Window</th>
                 <th className="px-3 py-3 font-medium">Problems</th>
@@ -73,7 +73,7 @@ export function TestsList() {
               {rows.map((r) => {
                 const s = status(r);
                 return (
-                  <tr key={r.id} className="border-t border-line first:border-t-0 hover:bg-sunken/60">
+                  <tr key={r.id} className="">
                     <td className="px-5 py-3.5">
                       <Link href={`/admin/tests/${r.id}`} className="font-medium text-ink hover:underline">{r.title}</Link>
                       <div className="mt-1 flex items-center gap-2">
@@ -82,9 +82,9 @@ export function TestsList() {
                       </div>
                     </td>
                     <td className="px-3 py-3.5 text-xs text-ink-2">{formatWhen(r.starts_at)}<br /><span className="text-muted">to {formatWhen(r.ends_at)}</span></td>
-                    <td className="px-3 py-3.5 font-mono text-xs tabular">{r.problem_count} | {r.total_marks} marks</td>
-                    <td className="px-3 py-3.5 font-mono text-xs tabular">{r.assigned === "all" ? "Everyone" : r.assigned}</td>
-                    <td className="px-3 py-3.5 font-mono text-xs tabular">{r.submitted}<span className="text-muted">/{r.started} started</span></td>
+                    <td className="px-3 py-3.5 text-xs tabular">{r.problem_count} | {r.total_marks} marks</td>
+                    <td className="px-3 py-3.5 text-xs tabular">{r.assigned === "all" ? "Everyone" : r.assigned}</td>
+                    <td className="px-3 py-3.5 text-xs tabular">{r.submitted}<span className="text-muted">/{r.started} started</span></td>
                     <td className="px-5 py-3.5 text-right">
                       {r.status === "published" ? (
                         <Link href={`/admin/tests/${r.id}/results`}><Button size="sm">{r.window === "live" ? "Live board" : "Results"}</Button></Link>

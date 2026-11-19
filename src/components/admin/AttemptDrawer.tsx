@@ -128,7 +128,7 @@ export function AttemptDrawer({ sheet, row, onClose, onReset }: {
               ].map(([k, v]) => (
                 <div key={k as string} className="bg-surface px-3 py-2.5">
                   <dt className="text-[11px] text-muted">{k}</dt>
-                  <dd className="font-mono text-base font-semibold tabular">{v}</dd>
+                  <dd className="text-base font-semibold tabular">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -146,22 +146,22 @@ export function AttemptDrawer({ sheet, row, onClose, onReset }: {
 
             <section>
               <h3 className="mb-2 text-sm font-semibold">Problems</h3>
-              <div className="overflow-hidden rounded-ui border border-line bg-surface">
-                <table className="w-full text-sm">
-                  <thead><tr className="border-b border-line text-left text-xs text-muted">
+              <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
+                <table className="data-table">
+                  <thead><tr>
                     <th className="px-3 py-2 font-medium">Problem</th><th className="px-3 py-2 font-medium">Level</th>
                     <th className="px-3 py-2 text-right font-medium">Tests</th><th className="px-3 py-2 text-right font-medium">Marks</th>
                     <th className="px-3 py-2 text-right font-medium">Cohort avg</th><th className="px-3 py-2 text-right font-medium">Submits</th>
                   </tr></thead>
                   <tbody>
                     {row.problems.map((c, i) => (
-                      <tr key={c.problem_id} className="border-t border-line first:border-t-0">
+                      <tr key={c.problem_id} className="">
                         <td className="max-w-56 truncate px-3 py-2">P{i + 1}. {c.title}</td>
                         <td className="px-3 py-2 text-xs text-muted">{c.difficulty}</td>
-                        <td className="px-3 py-2 text-right font-mono text-xs tabular">{c.attempted ? `${c.passed}/${c.total}` : "-"}</td>
-                        <td className={cx("px-3 py-2 text-right font-mono text-xs tabular", c.accepted ? "text-ok" : c.attempted ? "" : "text-muted")}>{c.marks_obtained}/{c.marks}</td>
-                        <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular">{avgs[i]}</td>
-                        <td className="px-3 py-2 text-right font-mono text-xs tabular">{c.submissions}</td>
+                        <td className="px-3 py-2 text-right text-xs tabular">{c.attempted ? `${c.passed}/${c.total}` : "-"}</td>
+                        <td className={cx("px-3 py-2 text-right text-xs tabular", c.accepted ? "text-ok" : c.attempted ? "" : "text-muted")}>{c.marks_obtained}/{c.marks}</td>
+                        <td className="px-3 py-2 text-right text-xs text-muted tabular">{avgs[i]}</td>
+                        <td className="px-3 py-2 text-right text-xs tabular">{c.submissions}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -185,7 +185,7 @@ export function AttemptDrawer({ sheet, row, onClose, onReset }: {
                     const off = started ? Math.max(0, Math.round((new Date(v.timestamp).getTime() - started) / 1000)) : 0;
                     return (
                       <li key={v.id} className="grid grid-cols-[72px_88px_1fr] items-center gap-3 bg-surface px-3 py-2 text-sm">
-                        <span className="font-mono text-xs text-muted tabular">+{Math.floor(off / 60)}m {off % 60}s</span>
+                        <span className="text-xs text-muted tabular">+{Math.floor(off / 60)}m {off % 60}s</span>
                         <Badge tone={v.type === "CRITICAL" ? "bad" : "warn"}>{v.type === "CRITICAL" ? "Critical" : "Warning"}</Badge>
                         <span className="min-w-0 text-ink-2">{v.description}<span className="ml-2 text-xs text-muted">{time.format(new Date(v.timestamp))}</span></span>
                       </li>

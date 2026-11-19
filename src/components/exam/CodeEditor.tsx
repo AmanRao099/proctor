@@ -42,10 +42,12 @@ export function CodeEditor({
       rules: [],
       colors: {
         "editor.background": "#ffffff",
-        "editorLineNumber.foreground": "#a1a1aa",
-        "editorLineNumber.activeForeground": "#3f3f46",
-        "editor.lineHighlightBackground": "#f4f4f5",
-        "editorIndentGuide.background1": "#ececeb",
+        "editorLineNumber.foreground": "#a3b0a8",
+        "editorLineNumber.activeForeground": "#354f52",
+        "editor.lineHighlightBackground": "#f3f6f2",
+        "editorCursor.foreground": "#52796f",
+        "editor.selectionBackground": "#cad2c5aa",
+        "editorIndentGuide.background1": "#e1e7de",
       },
     });
     monaco.editor.defineTheme("proctor-dark", {
@@ -53,11 +55,13 @@ export function CodeEditor({
       inherit: true,
       rules: [],
       colors: {
-        "editor.background": "#141417",
-        "editorLineNumber.foreground": "#52525b",
-        "editorLineNumber.activeForeground": "#d4d4d8",
-        "editor.lineHighlightBackground": "#1c1c20",
-        "editorIndentGuide.background1": "#232328",
+        "editor.background": "#1e292e",
+        "editorLineNumber.foreground": "#5d6f6c",
+        "editorLineNumber.activeForeground": "#cad2c5",
+        "editor.lineHighlightBackground": "#24323a",
+        "editorCursor.foreground": "#84a98c",
+        "editor.selectionBackground": "#52796f66",
+        "editorIndentGuide.background1": "#2c3a41",
       },
     });
     monaco.editor.setTheme(dark ? "proctor-dark" : "proctor-light");

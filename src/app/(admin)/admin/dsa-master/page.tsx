@@ -10,7 +10,7 @@ import { PageHeader, Stat, StatGrid } from "@/components/admin/AdminShell";
 import { ProblemBank } from "@/components/admin/ProblemBank";
 import { ResultsBoard } from "@/components/admin/ResultsBoard";
 import { TestsList } from "@/components/admin/TestsList";
-import { Badge, Button, Notice, Select, Skeleton, cx } from "@/components/ui";
+import { Badge, Button, Person, Notice, Select, Skeleton, cx } from "@/components/ui";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 import type { Violation } from "@/lib/shared/types";
 
@@ -63,13 +63,13 @@ interface Analytics {
 function Bands({ bands, total }: { bands: Analytics["round"]["bands"]; total: number }) {
   const max = Math.max(1, ...bands.map((b) => b.attempts));
   return (
-    <div className="rounded-ui border border-line bg-surface p-5">
+    <div className="rounded-card border border-line bg-surface p-6 shadow-card">
       <p className="text-sm font-semibold">Score distribution</p>
       <p className="text-xs text-muted">{total} finished attempt{total === 1 ? "" : "s"}</p>
       <div className="mt-5 grid grid-cols-4 items-end gap-4" style={{ height: 160 }}>
         {bands.map((b) => (
           <div key={b.label} className="flex h-full flex-col justify-end gap-2">
-            <span className="text-center font-mono text-sm tabular">{b.attempts}</span>
+            <span className="text-center text-sm tabular">{b.attempts}</span>
             <div
               className={cx("rounded-t-[4px]", b.low >= 60 ? "bg-accent" : "bg-line-strong")}
               style={{ height: `${Math.max(2, (b.attempts / max) * 100)}%` }}
@@ -90,8 +90,8 @@ function IntegrityCard({ row }: { row: Analytics["integrity"][number] }) {
       <button onClick={() => setOpen(!open)} className="grid w-full grid-cols-[16px_1fr_auto] items-start gap-3 px-4 py-3 text-left">
         {open ? <CaretDown size={14} className="mt-1 text-muted" /> : <CaretRight size={14} className="mt-1 text-muted" />}
         <div className="min-w-0">
-          <p className="font-medium">{row.name} <span className="font-mono text-xs text-muted">{row.username}</span></p>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <Person name={row.name} sub={row.username} />
+          <div className="mt-2 flex flex-wrap gap-1.5 pl-11">
             {row.violation_types.slice(0, 4).map((t) => (
               <span key={t.type} className="rounded-[4px] border border-line bg-bg px-1.5 py-0.5 text-[11px] text-ink-2">{t.type} <span className="font-mono text-muted">x{t.count}</span></span>
             ))}
@@ -99,7 +99,7 @@ function IntegrityCard({ row }: { row: Analytics["integrity"][number] }) {
           </div>
         </div>
         <div className="flex flex-col items-end gap-1 text-right">
-          <span className="font-mono text-sm tabular">{row.violation_count} <span className="text-xs text-muted">({row.critical_count} critical)</span></span>
+          <span className="text-sm tabular">{row.violation_count} <span className="text-xs text-muted">({row.critical_count} critical)</span></span>
           <span className="flex gap-1">
             {row.auto_submitted_attempts ? <Badge tone="bad">{row.auto_submitted_attempts} auto handed in</Badge> : null}
             {row.banned ? <Badge tone="bad">Barred</Badge> : row.cooldown_until ? <Badge tone="warn">Cooldown</Badge> : row.active_strikes ? <Badge tone="warn">{row.active_strikes} strike{row.active_strikes === 1 ? "" : "s"}</Badge> : null}
@@ -121,7 +121,7 @@ function IntegrityCard({ row }: { row: Analytics["integrity"][number] }) {
                     const off = started ? Math.max(0, Math.round((new Date(v.timestamp).getTime() - started) / 1000)) : 0;
                     return (
                       <li key={v.id} className="grid grid-cols-[70px_80px_1fr] items-center gap-3 bg-surface px-3 py-1.5 text-xs">
-                        <span className="font-mono text-muted tabular">+{Math.floor(off / 60)}m {off % 60}s</span>
+                        <span className="text-muted tabular">+{Math.floor(off / 60)}m {off % 60}s</span>
                         <Badge tone={v.type === "CRITICAL" ? "bad" : "warn"}>{v.type === "CRITICAL" ? "Critical" : "Warning"}</Badge>
                         <span className="text-ink-2">{v.description} <span className="text-muted">{new Date(v.timestamp).toLocaleTimeString()}</span></span>
                       </li>
@@ -242,12 +242,12 @@ function DSAMaster() {
           </StatGrid>
           <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
             <Bands bands={r.bands} total={r.attempts} />
-            <div className="rounded-ui border border-line bg-surface p-5">
+            <div className="rounded-card border border-line bg-surface p-6 shadow-card">
               <p className="text-sm font-semibold">Integrity at a glance</p>
               <dl className="mt-4 grid gap-3 text-sm">
                 {[["Clean attempts", r.clean_attempts, "text-ok"], ["Attempts with violations", r.flagged_attempts, "text-warn"], ["Handed in by the proctor", r.auto_submitted_attempts, "text-bad"], ["Lowest score", `${r.lowest_score}%`, ""]].map(([k, v, c]) => (
                   <div key={k as string} className="flex items-baseline justify-between border-b border-line pb-2 last:border-0">
-                    <dt className="text-ink-2">{k}</dt><dd className={cx("font-mono tabular", c as string)}>{v}</dd>
+                    <dt className="text-ink-2">{k}</dt><dd className={cx("tabular", c as string)}>{v}</dd>
                   </div>
                 ))}
               </dl>
@@ -269,7 +269,7 @@ function DSAMaster() {
             Strikes and cooldowns come from the lockout ladder (Settings).
           </p>
           {data.integrity.length === 0 ? (
-            <div className="rounded-ui border border-dashed border-line-strong px-6 py-12 text-center text-sm text-muted">No violations recorded in this window.</div>
+            <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-12 text-center text-sm text-muted">No violations recorded in this window.</div>
           ) : data.integrity.map((row) => <IntegrityCard key={row.user_id} row={row} />)}
         </div>
       ) : null}

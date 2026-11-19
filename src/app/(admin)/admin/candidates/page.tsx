@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DownloadSimple, MagnifyingGlass, UserPlus } from "@phosphor-icons/react/dist/ssr";
-import { Badge, Button, Dialog, Field, Input, Notice, Skeleton, Textarea, cx } from "@/components/ui";
+import { Badge, Button, Person, Dialog, Field, Input, Notice, Skeleton, Textarea, cx } from "@/components/ui";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 
 interface Candidate {
@@ -121,17 +121,17 @@ export default function CandidatesPage() {
       {list === null && !error ? <div className="grid gap-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}</div> : null}
 
       {list?.length === 0 ? (
-        <div className="rounded-ui border border-dashed border-line-strong px-6 py-16 text-center">
+        <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-16 text-center">
           <p className="font-medium">No candidates yet</p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted">Paste a list of names and emails. Usernames and passwords are generated for you.</p>
         </div>
       ) : null}
 
       {shown.length ? (
-        <div className="overflow-x-auto rounded-ui border border-line bg-surface">
-          <table className="w-full min-w-[720px] text-sm">
+        <div className="overflow-x-auto rounded-card border border-line bg-surface shadow-card">
+          <table className="data-table min-w-[720px]">
             <thead>
-              <tr className="border-b border-line text-left text-xs text-muted">
+              <tr>
                 <th className="px-5 py-3 font-medium">Name</th>
                 <th className="px-3 py-3 font-medium">Username</th>
                 <th className="px-3 py-3 font-medium">Last sign-in</th>
@@ -140,10 +140,12 @@ export default function CandidatesPage() {
             </thead>
             <tbody>
               {shown.map((c) => (
-                <tr key={c.id} className={cx("border-t border-line first:border-t-0", c.disabled && "text-muted")}>
+                <tr key={c.id} className={cx("", c.disabled && "text-muted")}>
                   <td className="px-5 py-3">
-                    <p className="font-medium">{c.name} {c.disabled ? <Badge className="ml-2">Disabled</Badge> : null}</p>
-                    {c.email ? <p className="text-xs text-muted">{c.email}</p> : null}
+                    <span className="flex items-center gap-2">
+                      <Person name={c.name} sub={c.email || undefined} />
+                      {c.disabled ? <Badge>Disabled</Badge> : null}
+                    </span>
                   </td>
                   <td className="px-3 py-3 font-mono text-xs">{c.username}</td>
                   <td className="px-3 py-3 text-xs text-muted">{c.last_login_at ? formatWhen(c.last_login_at) : "Never"}</td>

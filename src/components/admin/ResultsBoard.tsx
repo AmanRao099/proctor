@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DownloadSimple, FilePdf, MagnifyingGlass, ShieldWarning, Trophy } from "@phosphor-icons/react/dist/ssr";
-import { Badge, Button, Input, Notice, Select, Skeleton, cx } from "@/components/ui";
+import { Badge, Button, Person, Input, Notice, Select, Skeleton, cx } from "@/components/ui";
 import { api, ApiError, formatDuration, formatWhen } from "@/lib/client/api";
 import type { Sheet, SheetRow } from "@/lib/shared/sheet";
 import { Stat, StatGrid } from "./AdminShell";
@@ -125,10 +125,10 @@ export function ResultsBoard({ testId, live = true }: { testId: string; live?: b
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-ui border border-line bg-surface">
-        <table className="w-full min-w-[860px] text-sm">
+      <div className="overflow-x-auto rounded-card border border-line bg-surface shadow-card">
+        <table className="data-table min-w-[860px]">
           <thead>
-            <tr className="border-b border-line text-left text-xs text-muted">
+            <tr>
               <th className="w-14 px-4 py-3 font-medium">Rank</th>
               <th className="px-3 py-3 font-medium">Student</th>
               <th className="px-3 py-3 font-medium">State</th>
@@ -144,13 +144,12 @@ export function ResultsBoard({ testId, live = true }: { testId: string; live?: b
             {rows.length === 0 ? (
               <tr><td colSpan={6 + sheet.test.problems.length} className="px-4 py-12 text-center text-sm text-muted">No one matches.</td></tr>
             ) : rows.map((r) => (
-              <tr key={r.user_id} onClick={() => setOpen(r.user_id)} className="cursor-pointer border-t border-line first:border-t-0 hover:bg-sunken/60">
-                <td className="px-4 py-3 font-mono text-xs tabular">
+              <tr key={r.user_id} onClick={() => setOpen(r.user_id)} className="is-clickable ">
+                <td className="px-4 py-3 text-xs tabular">
                   {r.rank === 1 ? <span className="inline-flex items-center gap-1 text-accent"><Trophy size={13} weight="fill" />1</span> : r.rank ?? <span className="text-muted">-</span>}
                 </td>
                 <td className="px-3 py-3">
-                  <p className="font-medium">{r.name}</p>
-                  <p className="font-mono text-xs text-muted">{r.username}</p>
+                  <Person name={r.name} sub={r.username} />
                 </td>
                 <td className="px-3 py-3">
                   <Badge tone={STATE[r.state].tone}>{STATE[r.state].label}</Badge>
@@ -158,22 +157,22 @@ export function ResultsBoard({ testId, live = true }: { testId: string; live?: b
                     <span className={cx("ml-2 text-xs", r.status === "passed" ? "text-ok" : "text-muted")}>{r.status === "passed" ? "Passed" : "Below pass"}</span>
                   ) : null}
                 </td>
-                <td className="px-3 py-3 text-right font-mono tabular">
+                <td className="px-3 py-3 text-right tabular">
                   {r.state === "not_started" ? <span className="text-muted">-</span> : <>{r.marks_obtained}<span className="text-muted">/{r.total_marks}</span></>}
                 </td>
                 {r.problems.map((p) => (
-                  <td key={p.problem_id} className="px-2 py-3 text-right font-mono text-xs tabular" title={p.attempted ? `${p.passed}/${p.total} tests, ${p.submissions} submits, ${p.language}` : "Not submitted"}>
+                  <td key={p.problem_id} className="px-2 py-3 text-right text-xs tabular" title={p.attempted ? `${p.passed}/${p.total} tests, ${p.submissions} submits, ${p.language}` : "Not submitted"}>
                     {!p.attempted ? <span className="text-muted">-</span> : (
                       <span className={p.accepted ? "text-ok" : p.marks_obtained > 0 ? "text-ink" : "text-bad"}>{p.marks_obtained}</span>
                     )}
                   </td>
                 ))}
-                <td className="px-3 py-3 text-right font-mono text-xs text-muted tabular">
+                <td className="px-3 py-3 text-right text-xs text-muted tabular">
                   {r.state === "not_started" ? "" : formatDuration(r.time_spent_seconds)}
                 </td>
                 <td className="px-4 py-3 text-right">
                   {r.violation_count ? (
-                    <span className={cx("inline-flex items-center gap-1 font-mono text-xs tabular", r.auto_submitted ? "text-bad" : "text-warn")} title={r.auto_submitted ? "Auto handed in" : "Violations"}>
+                    <span className={cx("inline-flex items-center gap-1 text-xs tabular", r.auto_submitted ? "text-bad" : "text-warn")} title={r.auto_submitted ? "Auto handed in" : "Violations"}>
                       <ShieldWarning size={14} />{r.violation_count}
                     </span>
                   ) : null}

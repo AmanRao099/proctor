@@ -175,8 +175,8 @@ export function TestEditor({ testId }: { testId?: string }) {
         ) : null}
 
         <section id="details" className="scroll-mt-24 pt-8">
-          <h2 className="text-base font-semibold">Details</h2>
-          <div className="mt-4 grid gap-5">
+          <h2 className="text-[17px] font-semibold tracking-tight">Details</h2>
+          <div className="mt-4 grid gap-5 rounded-card border border-line bg-surface p-6 shadow-card">
             <Field label="Title">{(id) => <Input id={id} value={draft.title} onChange={(e) => set("title", e.target.value)} placeholder="Campus coding round, November" />}</Field>
             <Field label="Instructions" hint="Shown to candidates on the system check page before they start.">
               {(id) => <Textarea id={id} value={draft.instructions} onChange={(e) => set("instructions", e.target.value)} />}
@@ -202,8 +202,8 @@ export function TestEditor({ testId }: { testId?: string }) {
 
         <section id="problems" className="scroll-mt-24 border-t border-line pt-8 mt-10">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-base font-semibold">Problems</h2>
-            <span className="font-mono text-xs text-muted">{draft.problems.length} problems | {totalMarks} marks</span>
+            <h2 className="text-[17px] font-semibold tracking-tight">Problems</h2>
+            <span className="text-xs text-muted">{draft.problems.length} problems | {totalMarks} marks</span>
           </div>
           <div className="mt-4 grid gap-3">
             {draft.problems.map((p, i) => (
@@ -223,7 +223,7 @@ export function TestEditor({ testId }: { testId?: string }) {
             ))}
           </div>
           {draft.problems.length === 0 ? (
-            <p className="rounded-ui border border-dashed border-line-strong px-4 py-8 text-center text-sm text-muted">No problems yet. Add from the problem bank, or write one here.</p>
+            <p className="rounded-card border border-dashed border-line-strong bg-surface/60 px-4 py-8 text-center text-sm text-muted">No problems yet. Add from the problem bank, or write one here.</p>
           ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
             <Button variant="primary" onClick={() => setBankOpen(true)}><Books size={16} /> Add from bank</Button>
@@ -243,7 +243,7 @@ export function TestEditor({ testId }: { testId?: string }) {
         </section>
 
         <section id="candidates" className="scroll-mt-24 border-t border-line pt-8 mt-10">
-          <h2 className="text-base font-semibold">Candidates</h2>
+          <h2 className="text-[17px] font-semibold tracking-tight">Candidates</h2>
           <div className="mt-4">
             <CandidatePicker
               assignAll={draft.assign_all}
@@ -255,7 +255,7 @@ export function TestEditor({ testId }: { testId?: string }) {
         </section>
 
         <section id="proctoring" className="scroll-mt-24 border-t border-line pt-8 mt-10">
-          <h2 className="text-base font-semibold">Proctoring</h2>
+          <h2 className="text-[17px] font-semibold tracking-tight">Proctoring</h2>
           <div className="mt-4">
             <ProctoringForm
               value={draft.proctoring}
@@ -266,7 +266,7 @@ export function TestEditor({ testId }: { testId?: string }) {
           </div>
         </section>
 
-        <div className="sticky bottom-0 z-20 mt-12 border-t border-line bg-bg/95 py-4 backdrop-blur">
+        <div className="sticky bottom-5 z-20 mt-12 rounded-card border border-line bg-surface/95 px-4 py-3 shadow-pop backdrop-blur">
           {error ? <p className="mb-3 text-sm text-bad" role="alert">{error}</p> : null}
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="primary" busy={saving === "published"} disabled={!!saving} onClick={() => save("published")}>

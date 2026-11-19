@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowCounterClockwise, ArrowsOut, CheckCircle, CloudCheck, CloudSlash, Play, ShieldWarning, UploadSimple,
+  ArrowCounterClockwise, ArrowsOut, CheckCircle, Clock, CloudCheck, CloudSlash, Play, ShieldWarning, UploadSimple,
 } from "@phosphor-icons/react/dist/ssr";
 import { CodeEditor } from "@/components/exam/CodeEditor";
 import { ResultPanel, type Outcome } from "@/components/exam/ResultPanel";
 import { Statement } from "@/components/exam/Statement";
-import { Badge, Button, Dialog, Kbd, Notice, Select, Skeleton, cx } from "@/components/ui";
+import { Badge, Button, Dialog, Notice, Select, Skeleton, cx } from "@/components/ui";
 import { api, ApiError, formatDuration } from "@/lib/client/api";
 import { isMobileDevice } from "@/lib/client/device";
 import { useProctor } from "@/lib/proctor/ProctorProvider";
@@ -460,14 +460,14 @@ export default function ExamPage() {
                 <div className="mt-8 rounded-ui border border-line bg-surface">
                   <div className="flex items-baseline justify-between border-b border-line px-5 py-4">
                     <span className="text-sm text-muted">Score</span>
-                    <span className="font-mono text-2xl font-semibold tabular">
+                    <span className="text-2xl font-semibold tabular">
                       {final.marks_obtained}<span className="text-base text-muted">/{final.total_marks}</span>
                     </span>
                   </div>
                   {final.problems.map((p) => (
                     <div key={p.id} className="flex items-center justify-between gap-4 border-t border-line px-5 py-3 text-sm first:border-t-0">
                       <span className="min-w-0 truncate">{p.title}</span>
-                      <span className="shrink-0 font-mono text-xs text-muted tabular">
+                      <span className="shrink-0 text-xs text-muted tabular">
                         {p.passed}/{p.total} tests | {p.marks_obtained}/{p.marks}
                       </span>
                     </div>
@@ -503,10 +503,11 @@ export default function ExamPage() {
   const outcome = outcomes[problem.id] ?? null;
 
   return (
-    <div className="grid h-[100dvh] grid-rows-[48px_1fr] overflow-hidden">
+    <div className="grid h-[100dvh] grid-rows-[56px_1fr] overflow-hidden">
       {/* ── Header ── */}
-      <header className="flex items-center gap-4 border-b border-line bg-surface px-4">
-        <p className="hidden max-w-56 truncate text-sm font-semibold lg:block">{paper.test.title}</p>
+      <header className="flex items-center gap-4 border-b border-line bg-surface px-4 shadow-card">
+        <p className="hidden max-w-60 truncate text-sm font-semibold lg:block">{paper.test.title}</p>
+        <span className="hidden h-6 w-px bg-line lg:block" />
         <nav className="flex min-w-0 items-center gap-1 overflow-x-auto" aria-label="Problems">
           {problems.map((p, i) => {
             const b = best[p.id];
@@ -517,11 +518,11 @@ export default function ExamPage() {
                 onClick={() => setCurrent(i)}
                 title={p.title}
                 className={cx(
-                  "flex h-8 shrink-0 items-center gap-1.5 rounded-ui border px-2.5 text-[13px] transition-colors",
-                  i === current ? "border-ink bg-ink text-bg" : "border-line text-ink-2 hover:border-line-strong",
+                  "flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition-colors",
+                  i === current ? "bg-accent-soft text-accent ring-1 ring-inset ring-accent-line" : "text-ink-2 hover:bg-sunken",
                 )}
               >
-                <span className="font-mono">{i + 1}</span>
+                <span>Problem {i + 1}</span>
                 {b ? (
                   <span className={cx("h-1.5 w-1.5 rounded-full", withheld ? "bg-accent" : full ? "bg-ok" : "bg-warn")} aria-label="submitted" />
                 ) : null}
@@ -544,19 +545,21 @@ export default function ExamPage() {
               title={`${strikesLeft} more violation${strikesLeft === 1 ? "" : "s"} hands in your test`}
             >
               <ShieldWarning size={15} />
-              <span className="font-mono tabular">{ps.violationCount}/{ps.maxViolations}</span>
+              <span className="tabular">{ps.violationCount}/{ps.maxViolations}</span>
             </span>
           ) : null}
           <span
             className={cx(
-              "rounded-ui border px-2.5 py-1 font-mono text-sm font-medium tabular",
-              veryLow ? "border-bad bg-bad-soft text-bad" : low ? "border-warn bg-warn-soft text-warn" : "border-line text-ink",
+              "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-semibold tabular ring-1 ring-inset",
+              veryLow ? "bg-bad-soft text-bad ring-bad/30" : low ? "bg-warn-soft text-warn ring-warn/30" : "bg-sunken text-ink ring-line",
             )}
             aria-live={low ? "polite" : "off"}
+            title="Time left"
           >
+            <Clock size={15} weight="bold" />
             {formatDuration(timeLeft)}
           </span>
-          <Button size="sm" variant="primary" onClick={() => setConfirmOpen(true)}>Hand in</Button>
+          <Button size="sm" variant="dark" onClick={() => setConfirmOpen(true)}>Hand in</Button>
         </div>
       </header>
 
@@ -566,12 +569,12 @@ export default function ExamPage() {
           <Statement problem={problem} index={current} />
         </div>
 
-        <div className="grid min-h-0 grid-rows-[44px_minmax(0,1fr)_minmax(180px,34%)]">
+        <div className="grid min-h-0 grid-rows-[52px_minmax(0,1fr)_minmax(190px,34%)]">
           <div className="flex items-center gap-2 border-b border-line bg-surface px-3">
             <Select
               value={lang}
               onChange={(e) => setLangs((l) => ({ ...l, [problem.id]: e.target.value as Language }))}
-              className="h-8 w-40 text-[13px]"
+              className="h-8 w-40 text-[13px] shadow-none"
               aria-label="Language"
             >
               {problem.languages.map((l) => <option key={l} value={l}>{LANGUAGES[l].label}</option>)}
@@ -585,8 +588,7 @@ export default function ExamPage() {
               </Badge>
             ) : best[problem.id] ? <Badge tone="accent" className="ml-1">Submitted</Badge> : null}
             <div className="ml-auto flex items-center gap-2">
-              <span className="hidden text-xs text-muted xl:inline">Run <Kbd>Ctrl</Kbd> <Kbd>&apos;</Kbd></span>
-              <Button size="sm" onClick={() => run(tab === "custom")} busy={busy === "run"} disabled={!!busy}>
+              <Button size="sm" title="Run (Ctrl + ')" onClick={() => run(tab === "custom")} busy={busy === "run"} disabled={!!busy}>
                 <Play size={14} weight="fill" /> {tab === "custom" ? "Run with custom input" : "Run"}
               </Button>
               <Button size="sm" variant="accent" onClick={submit} busy={busy === "submit"} disabled={!!busy}>
@@ -679,7 +681,7 @@ export default function ExamPage() {
                 <span className="shrink-0 text-xs">
                   {!b ? <span className="text-muted">Not submitted</span>
                     : withheld ? <span className="text-accent">Submitted</span>
-                      : <span className="font-mono tabular text-ink-2">{b.marks_obtained}/{p.marks}</span>}
+                      : <span className="tabular text-ink-2">{b.marks_obtained}/{p.marks}</span>}
                 </span>
               </li>
             );

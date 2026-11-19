@@ -79,7 +79,7 @@ export function LoginForm() {
           </div>
         )}
       </Field>
-      <Button type="submit" variant="primary" busy={busy} disabled={!username || !password} className="mt-1">
+      <Button type="submit" variant="primary" busy={busy} disabled={!username || !password} className="mt-2 h-11 w-full">
         Sign in
       </Button>
     </form>

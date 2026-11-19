@@ -20,10 +20,10 @@ import { performanceAxes, problemAverages, problemAxes, type RadarAxis } from ".
 type Doc = import("jspdf").jsPDF;
 
 const APP = process.env.NEXT_PUBLIC_APP_NAME || "Proctor";
-const INK: [number, number, number] = [24, 24, 27];
-const MUTED: [number, number, number] = [98, 98, 106];
-const LINE: [number, number, number] = [222, 222, 219];
-const ACCENT: [number, number, number] = [36, 64, 201];
+const INK: [number, number, number] = [47, 62, 70];
+const MUTED: [number, number, number] = [95, 111, 114];
+const LINE: [number, number, number] = [202, 210, 197];
+const ACCENT: [number, number, number] = [82, 121, 111];
 const BAD: [number, number, number] = [180, 35, 24];
 const WARN: [number, number, number] = [150, 84, 7];
 const OK: [number, number, number] = [26, 115, 67];
@@ -118,7 +118,7 @@ export async function resultSheetPdf(sheet: Sheet) {
   let y = 52;
 
   const head = () => {
-    doc.setFillColor(243, 244, 243);
+    doc.setFillColor(237, 241, 235);
     doc.rect(12, y - 4.5, W - 24, 7, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
@@ -217,7 +217,7 @@ function radar(doc: Doc, axes: RadarAxis[], cx: number, cy: number, r: number, t
   shape(axes.map((a) => a.cohort), "S");
   doc.setLineDashPattern([], 0);
   doc.setDrawColor(...ACCENT);
-  doc.setFillColor(222, 228, 252);
+  doc.setFillColor(222, 233, 225);
   doc.setLineWidth(0.6);
   shape(axes.map((a) => a.student), "FD");
   doc.setLineWidth(0.2);

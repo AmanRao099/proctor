@@ -18,7 +18,7 @@ export function Radar({ axes, title }: { axes: RadarAxis[]; title: string }) {
   return (
     <figure className="min-w-0">
       <figcaption className="mb-1 text-xs font-medium text-muted">{title}</figcaption>
-      <svg viewBox={`0 0 ${size} ${size}`} className="h-auto w-full max-w-[300px]" role="img" aria-label={`${title}: ${axes.map((a) => `${a.axis} ${a.student}`).join(", ")}`}>
+      <svg viewBox={`-56 -6 ${size + 112} ${size + 12}`} className="h-auto w-full max-w-[340px] overflow-visible" role="img" aria-label={`${title}: ${axes.map((a) => `${a.axis} ${a.student}`).join(", ")}`}>
         {[25, 50, 75, 100].map((ring) => (
           <polygon key={ring} points={poly(axes.map(() => ring))} fill="none" stroke="var(--line)" strokeWidth={1} />
         ))}

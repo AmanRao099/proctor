@@ -36,7 +36,7 @@ function Sample({ label, text }: { label: string; text: string }) {
   return (
     <div className="min-w-0">
       <p className="mb-1 text-xs text-muted">{label}</p>
-      <pre className="overflow-x-auto rounded-ui border border-line bg-sunken px-3 py-2 font-mono text-[13px] leading-relaxed text-ink">{text || " "}</pre>
+      <pre className="overflow-x-auto rounded-ui border border-line bg-raised px-3 py-2.5 font-mono text-[13px] leading-relaxed text-ink">{text || " "}</pre>
     </div>
   );
 }
@@ -44,8 +44,8 @@ function Sample({ label, text }: { label: string; text: string }) {
 export function Statement({ problem, index }: { problem: PaperProblem; index: number }) {
   return (
     <article className="px-6 py-6">
-      <p className="font-mono text-xs text-muted">Problem {index + 1} | {problem.marks} marks</p>
-      <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-ink">{problem.title}</h2>
+      <p className="flex items-center gap-2 text-xs text-muted"><span className="rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent">Problem {index + 1}</span>{problem.marks} marks</p>
+      <h2 className="mt-3 text-[22px] font-semibold tracking-tight text-ink">{problem.title}</h2>
       <div className="mt-5"><Rich text={problem.statement} /></div>
       <Block title="Input" text={problem.input_format} />
       <Block title="Output" text={problem.output_format} />

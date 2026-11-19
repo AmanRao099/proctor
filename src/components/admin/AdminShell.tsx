@@ -9,7 +9,7 @@ import {
 import { api } from "@/lib/client/api";
 import type { SessionUser } from "@/lib/shared/types";
 import { Wordmark } from "@/components/TopBar";
-import { cx } from "@/components/ui";
+import { Avatar, cx } from "@/components/ui";
 
 type NavItem = { href: string; label: string; icon: typeof Code; exact?: boolean; also?: string };
 
@@ -45,7 +45,7 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="grid gap-6">
       {GROUPS.map((g) => (
         <div key={g.title}>
-          <p className="mb-1.5 px-2.5 text-[11px] font-medium text-muted">{g.title}</p>
+          <p className="mb-1.5 px-3 text-xs font-medium text-muted">{g.title}</p>
           <div className="grid gap-0.5">
             {g.items.map((item) => {
               const active = item.exact
@@ -59,11 +59,11 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
                   className={cx(
-                    "flex h-9 items-center gap-2.5 rounded-ui px-2.5 text-sm transition-colors",
-                    active ? "bg-surface text-ink shadow-[inset_0_0_0_1px_var(--line)]" : "text-ink-2 hover:bg-sunken hover:text-ink",
+                    "flex h-9 items-center gap-3 rounded-ui px-3 text-sm transition-colors",
+                    active ? "bg-accent-soft font-medium text-accent" : "text-ink-2 hover:bg-sunken hover:text-ink",
                   )}
                 >
-                  <Icon size={17} weight={active ? "fill" : "regular"} className={active ? "text-accent" : "text-muted"} />
+                  <Icon size={18} weight={active ? "fill" : "regular"} className={active ? "text-accent" : "text-muted"} />
                   {item.label}
                 </Link>
               );
@@ -89,33 +89,34 @@ export function AdminShell({ user, children }: { user: SessionUser; children: Re
   }
 
   const footer = (
-    <div className="flex items-center gap-2 border-t border-line pt-4">
+    <div className="flex items-center gap-3 rounded-card border border-line bg-raised p-2.5">
+      <Avatar name={user.name} size={34} />
       <div className="min-w-0 flex-1 leading-tight">
-        <p className="truncate text-[13px] text-ink">{user.name}</p>
-        <p className="truncate font-mono text-[11px] text-muted">{user.username}</p>
+        <p className="truncate text-[13px] font-medium text-ink">{user.name}</p>
+        <p className="truncate text-xs text-muted">Administrator</p>
       </div>
-      <button onClick={signOut} title="Sign out" aria-label="Sign out" className="grid h-8 w-8 place-items-center rounded-ui text-muted hover:bg-sunken hover:text-ink">
-        <SignOut size={16} />
+      <button onClick={signOut} title="Sign out" aria-label="Sign out" className="grid h-8 w-8 place-items-center rounded-ui text-muted transition-colors hover:bg-sunken hover:text-ink">
+        <SignOut size={17} />
       </button>
     </div>
   );
 
   return (
-    <div className="min-h-[100dvh] lg:grid lg:grid-cols-[232px_1fr]">
-      <aside className="sticky top-0 hidden h-[100dvh] flex-col gap-8 border-r border-line bg-bg px-3 py-5 lg:flex">
-        <Link href="/admin" className="px-2.5"><Wordmark /></Link>
+    <div className="min-h-[100dvh] lg:grid lg:grid-cols-[248px_1fr]">
+      <aside className="sticky top-0 hidden h-[100dvh] flex-col gap-7 border-r border-line bg-surface px-3 py-5 lg:flex">
+        <Link href="/admin" className="px-3"><Wordmark /></Link>
         <div className="min-h-0 flex-1 overflow-y-auto"><Nav /></div>
         {footer}
       </aside>
 
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-bg/95 px-4 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface/95 px-4 backdrop-blur lg:hidden">
         <Wordmark />
         <button onClick={() => setOpen(true)} aria-label="Open menu" className="grid h-9 w-9 place-items-center rounded-ui hover:bg-sunken"><List size={20} /></button>
       </header>
       {open ? (
-        <div className="fixed inset-0 z-50 bg-[rgb(10_10_12/0.4)] lg:hidden" onClick={() => setOpen(false)}>
-          <aside className="flex h-full w-72 flex-col gap-8 border-r border-line bg-bg px-3 py-5" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-2.5">
+        <div className="fixed inset-0 z-50 bg-[rgb(47_62_70/0.4)] lg:hidden" onClick={() => setOpen(false)}>
+          <aside className="flex h-full w-72 flex-col gap-7 border-r border-line bg-surface px-3 py-5 shadow-pop" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-3">
               <Wordmark />
               <button onClick={() => setOpen(false)} aria-label="Close menu" className="grid h-8 w-8 place-items-center rounded-ui hover:bg-sunken"><X size={16} /></button>
             </div>
@@ -125,8 +126,8 @@ export function AdminShell({ user, children }: { user: SessionUser; children: Re
         </div>
       ) : null}
 
-      <main className="min-w-0 px-4 pb-20 pt-6 sm:px-8 lg:pt-8">
-        <div className="mx-auto max-w-[1180px]">{children}</div>
+      <main className="min-w-0 px-4 pb-24 pt-6 sm:px-8 lg:px-10 lg:pt-9">
+        <div className="mx-auto max-w-[1160px]">{children}</div>
       </main>
     </div>
   );
@@ -136,27 +137,38 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   return (
     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {subtitle ? <p className="mt-1 text-sm text-muted">{subtitle}</p> : null}
+        <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-ink">{title}</h1>
+        {subtitle ? <p className="mt-1.5 text-sm text-muted">{subtitle}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   );
 }
 
-export function Stat({ label, value, hint, tone }: { label: string; value: React.ReactNode; hint?: React.ReactNode; tone?: "ok" | "warn" | "bad" | "accent" }) {
-  const color = tone === "ok" ? "text-ok" : tone === "warn" ? "text-warn" : tone === "bad" ? "text-bad" : tone === "accent" ? "text-accent" : "text-ink";
+const TONE_TEXT = { ok: "text-ok", warn: "text-warn", bad: "text-bad", accent: "text-accent" } as const;
+const TONE_CHIP = { ok: "bg-ok-soft text-ok", warn: "bg-warn-soft text-warn", bad: "bg-bad-soft text-bad", accent: "bg-accent-soft text-accent" } as const;
+
+export function Stat({ label, value, hint, tone, icon }: {
+  label: string;
+  value: React.ReactNode;
+  hint?: React.ReactNode;
+  tone?: keyof typeof TONE_TEXT;
+  icon?: React.ReactNode;
+}) {
   return (
-    <div className="bg-surface px-5 py-4">
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className={cx("mt-1 font-mono text-2xl font-semibold tabular", color)}>{value}</dd>
-      {hint ? <dd className="mt-0.5 text-xs text-muted">{hint}</dd> : null}
+    <div className="rounded-card border border-line bg-surface px-5 py-4 shadow-card">
+      <dt className="flex items-center justify-between gap-2 text-[13px] text-muted">
+        {label}
+        {icon ? <span className={cx("grid h-7 w-7 place-items-center rounded-full", tone ? TONE_CHIP[tone] : "bg-sunken text-ink-2")}>{icon}</span> : null}
+      </dt>
+      <dd className={cx("mt-2 text-[26px] font-semibold leading-none tracking-tight tabular", tone ? TONE_TEXT[tone] : "text-ink")}>{value}</dd>
+      {hint ? <dd className="mt-2 text-xs text-muted">{hint}</dd> : null}
     </div>
   );
 }
 
-/** Stats in a hairline grid: the cells share borders instead of each being a card. */
+/** Stat cards in a responsive grid. */
 export function StatGrid({ children, cols = 4 }: { children: React.ReactNode; cols?: 2 | 3 | 4 | 5 }) {
-  const c = { 2: "sm:grid-cols-2", 3: "sm:grid-cols-3", 4: "sm:grid-cols-4", 5: "sm:grid-cols-5" }[cols];
-  return <dl className={cx("grid grid-cols-2 gap-px overflow-hidden rounded-ui border border-line bg-line", c)}>{children}</dl>;
+  const c = { 2: "lg:grid-cols-2", 3: "lg:grid-cols-3", 4: "lg:grid-cols-4", 5: "lg:grid-cols-5" }[cols];
+  return <dl className={cx("grid grid-cols-2 gap-3 sm:gap-4", c)}>{children}</dl>;
 }

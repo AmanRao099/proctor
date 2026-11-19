@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowsOut, Camera, CameraSlash, Eye, MagnifyingGlass, ShieldWarning, WifiSlash } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader, Stat, StatGrid } from "@/components/admin/AdminShell";
-import { Input, Notice, Select, Skeleton, cx } from "@/components/ui";
+import { Avatar, Input, Notice, Person, Select, Skeleton, cx } from "@/components/ui";
 import { api, ApiError, formatDuration } from "@/lib/client/api";
 import type { Violation } from "@/lib/shared/types";
 
@@ -105,15 +105,15 @@ export default function ActivePage() {
           </div>
 
           {all.length === 0 ? (
-            <div className="rounded-ui border border-dashed border-line-strong px-6 py-14 text-center">
+            <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center">
               <p className="font-medium">Nobody is writing a test right now</p>
               <p className="mt-1 text-sm text-muted">Students appear here the moment they open a paper.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-ui border border-line bg-surface">
-              <table className="w-full min-w-[900px] text-sm">
+            <div className="overflow-x-auto rounded-card border border-line bg-surface shadow-card">
+              <table className="data-table min-w-[900px]">
                 <thead>
-                  <tr className="border-b border-line text-left text-xs text-muted">
+                  <tr>
                     <th className="px-4 py-3 font-medium">Student</th>
                     <th className="px-3 py-3 font-medium">On problem</th>
                     <th className="px-3 py-3 font-medium">Proctor</th>
@@ -124,18 +124,17 @@ export default function ActivePage() {
                 </thead>
                 <tbody>
                   {rows.map((w) => (
-                    <tr key={w.attempt_id} className={cx("border-t border-line first:border-t-0", !w.signal && "bg-bad-soft/40")}>
+                    <tr key={w.attempt_id} className={cx("", !w.signal && "bg-bad-soft/40")}>
                       <td className="px-4 py-3">
-                        <p className="font-medium">{w.name}</p>
-                        <p className="text-xs text-muted"><span className="font-mono">{w.username}</span> | <Link href={`/admin/tests/${w.test_id}/results`} className="hover:text-ink">{w.test}</Link></p>
+                        <Person name={w.name} sub={<>{w.username} | <Link href={`/admin/tests/${w.test_id}/results`} className="hover:text-ink">{w.test}</Link></>} />
                       </td>
                       <td className="max-w-48 truncate px-3 py-3 text-ink-2">{w.problem || <span className="text-muted">-</span>}</td>
                       <td className="px-3 py-3">
                         <Signal w={w} />
                         <p className="mt-0.5 text-[11px] text-muted">seen {ago(w.last_seen)}</p>
                       </td>
-                      <td className="px-3 py-3 text-right font-mono tabular">{w.marks_obtained}<span className="text-muted">/{w.total_marks}</span><p className="text-[11px] text-muted">{w.solved}/{w.problem_count} solved</p></td>
-                      <td className={cx("px-3 py-3 text-right font-mono tabular", w.remaining_seconds < 300 ? "text-warn" : "")}>{formatDuration(w.remaining_seconds)}</td>
+                      <td className="px-3 py-3 text-right tabular">{w.marks_obtained}<span className="text-muted">/{w.total_marks}</span><p className="text-[11px] text-muted">{w.solved}/{w.problem_count} solved</p></td>
+                      <td className={cx("px-3 py-3 text-right tabular", w.remaining_seconds < 300 ? "text-warn" : "")}>{formatDuration(w.remaining_seconds)}</td>
                       <td className="px-4 py-3">
                         {w.violation_count ? (
                           <span className="flex items-start gap-1.5 text-xs">
@@ -156,8 +155,8 @@ export default function ActivePage() {
             {data.online.length === 0 ? <p className="text-sm text-muted">Nobody in the last 30 minutes.</p> : (
               <div className="flex flex-wrap gap-2">
                 {data.online.map((u) => (
-                  <span key={u.user_id} className="rounded-ui border border-line bg-surface px-3 py-1.5 text-sm">
-                    {u.name} <span className="font-mono text-xs text-muted">{u.username} | {ago(u.last_login_at)}</span>
+                  <span key={u.user_id} className="flex items-center gap-2 rounded-full border border-line bg-surface py-1 pl-1 pr-3 text-sm shadow-card">
+                    <Avatar name={u.name} size={24} />{u.name} <span className="text-xs text-muted">{ago(u.last_login_at)}</span>
                   </span>
                 ))}
               </div>
