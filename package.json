@@ -1,0 +1,44 @@
+{
+  "name": "proctor",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "predev": "node scripts/copy-monaco.mjs",
+    "dev": "next dev -p 3100",
+    "prebuild": "node scripts/copy-monaco.mjs",
+    "build": "next build",
+    "start": "next start -p 3100",
+    "typecheck": "tsc --noEmit",
+    "db:memory": "tsx scripts/memory-db.ts",
+    "seed:admin": "tsx scripts/seed-admin.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "check:judge0": "tsx scripts/check-judge0.ts"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "1.0.1",
+    "@monaco-editor/react": "4.7.0",
+    "@phosphor-icons/react": "2.1.7",
+    "bcryptjs": "2.4.3",
+    "geist": "1.3.1",
+    "jose": "5.9.6",
+    "monaco-editor": "^0.52.2",
+    "mongodb": "6.10.0",
+    "next": "15.5.12",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "server-only": "^0.0.1",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.12",
+    "@types/bcryptjs": "2.4.6",
+    "@types/node": "22.10.2",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "dotenv": "16.4.7",
+    "mongodb-memory-server": "10.1.2",
+    "tailwindcss": "4.1.12",
+    "tsx": "4.19.2",
+    "typescript": "5.9.3"
+  }
+}
