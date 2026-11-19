@@ -2,9 +2,16 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowsOut, Camera, CameraSlash, Eye, MagnifyingGlass, ShieldWarning, WifiSlash } from "@phosphor-icons/react/dist/ssr";
+import { ArrowsOut } from "@phosphor-icons/react/dist/ssr/ArrowsOut";
+import { Camera } from "@phosphor-icons/react/dist/ssr/Camera";
+import { CameraSlash } from "@phosphor-icons/react/dist/ssr/CameraSlash";
+import { Eye } from "@phosphor-icons/react/dist/ssr/Eye";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
+import { ShieldWarning } from "@phosphor-icons/react/dist/ssr/ShieldWarning";
+import { WifiSlash } from "@phosphor-icons/react/dist/ssr/WifiSlash";
 import { PageHeader, Stat, StatGrid } from "@/components/admin/AdminShell";
 import { Avatar, Input, Notice, Person, Select, Skeleton, cx } from "@/components/ui";
+import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatDuration } from "@/lib/client/api";
 import type { Violation } from "@/lib/shared/types";
 
@@ -46,27 +53,11 @@ function Signal({ w }: { w: Writing }) {
 }
 
 export default function ActivePage() {
-  const [data, setData] = useState<Data | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error } = useApi<Data>("/api/admin/active", { refreshMs: 10_000 });
   const [q, setQ] = useState("");
   const [test, setTest] = useState("");
   const [updated, setUpdated] = useState<Date | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      setData(await api.get<Data>("/api/admin/active"));
-      setUpdated(new Date());
-      setError(null);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Could not load.");
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-    const t = window.setInterval(() => void load(), 10_000);
-    return () => window.clearInterval(t);
-  }, [load]);
+  useEffect(() => { if (data) setUpdated(new Date()); }, [data]);
 
   const tests = useMemo(() => [...new Map((data?.writing ?? []).map((w) => [w.test_id, w.test])).entries()], [data]);
   const rows = (data?.writing ?? []).filter((w) =>

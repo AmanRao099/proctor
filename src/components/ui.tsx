@@ -2,7 +2,7 @@
 
 import { forwardRef, useEffect, useId, useRef } from "react";
 import { twMerge } from "tailwind-merge";
-import { CaretDown } from "@phosphor-icons/react/dist/ssr";
+import { CaretDown } from "@phosphor-icons/react/dist/ssr/CaretDown";
 
 /** Class join that lets a later class win a conflict (w-40 over w-full). */
 export function cx(...parts: (string | false | null | undefined)[]) {

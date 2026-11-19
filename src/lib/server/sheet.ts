@@ -12,17 +12,42 @@ export type { Sheet, SheetRow };
  * reports, so no two screens can disagree about a candidate's score.
  */
 
-export async function buildSheet(d: Db, test: TestDoc, passMark: number, now = new Date()): Promise<Sheet> {
+type UserLite = Pick<UserDoc, "_id" | "username" | "name" | "email">;
+
+/**
+ * Sheets for many tests in TWO queries (attempts, then users) instead of two
+ * per test. Analytics, the leaderboard and reports build every sheet in scope,
+ * so per-test queries grew linearly with the number of tests.
+ */
+export async function buildSheets(d: Db, tests: TestDoc[], passMark: number, now = new Date()): Promise<Sheet[]> {
+  if (!tests.length) return [];
   const attempts = await d.collection<AttemptDoc>("attempts")
-    .find({ test_id: test._id }, { projection: { code: 0, "best.code": 0 } })
+    .find({ test_id: { $in: tests.map((t) => t._id) } }, { projection: { code: 0, "best.code": 0, presence: 0, user_agent: 0 } })
     .toArray();
+  const userIds = new Map<string, ObjectId>();
+  for (const t of tests) if (!t.assign_all) for (const u of t.candidate_ids || []) userIds.set(String(u), u);
+  for (const a of attempts) userIds.set(String(a.user_id), a.user_id);
+  const users = await d.collection<UserDoc>("users")
+    .find({ _id: { $in: [...userIds.values()] } }, { projection: { username: 1, name: 1, email: 1 } })
+    .toArray();
+  const userById = new Map<string, UserLite>(users.map((u) => [String(u._id), u]));
+  const byTest = new Map<string, AttemptDoc[]>();
+  for (const a of attempts) {
+    const k = String(a.test_id);
+    const list = byTest.get(k);
+    if (list) list.push(a); else byTest.set(k, [a]);
+  }
+  return tests.map((t) => assembleSheet(t, byTest.get(String(t._id)) ?? [], userById, passMark, now));
+}
+
+export async function buildSheet(d: Db, test: TestDoc, passMark: number, now = new Date()): Promise<Sheet> {
+  return (await buildSheets(d, [test], passMark, now))[0];
+}
+
+function assembleSheet(test: TestDoc, attempts: AttemptDoc[], userById: Map<string, UserLite>, passMark: number, now: Date): Sheet {
   const ids = new Map<string, ObjectId>();
   if (!test.assign_all) for (const u of test.candidate_ids || []) ids.set(String(u), u);
   for (const a of attempts) ids.set(String(a.user_id), a.user_id);
-  const users = await d.collection<UserDoc>("users")
-    .find({ _id: { $in: [...ids.values()] } }, { projection: { username: 1, name: 1, email: 1 } })
-    .toArray();
-  const userById = new Map(users.map((u) => [String(u._id), u]));
   const attemptByUser = new Map(attempts.map((a) => [String(a.user_id), a]));
   const total = totalMarks(test);
 

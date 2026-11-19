@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Gavel, Microphone, ShieldCheck, Stop, Target } from "@phosphor-icons/react/dist/ssr";
+import { Gavel } from "@phosphor-icons/react/dist/ssr/Gavel";
+import { Microphone } from "@phosphor-icons/react/dist/ssr/Microphone";
+import { ShieldCheck } from "@phosphor-icons/react/dist/ssr/ShieldCheck";
+import { Stop } from "@phosphor-icons/react/dist/ssr/Stop";
+import { Target } from "@phosphor-icons/react/dist/ssr/Target";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { ProctoringForm } from "@/components/admin/ProctoringForm";
 import { Button, Card, Input, Notice, SectionCard, Segmented, SettingRow, Skeleton, Switch, cx } from "@/components/ui";

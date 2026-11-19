@@ -1,12 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ArrowRight,  ChartLineUp, Gavel, Pulse, ShieldWarning, SignIn, Target, Tray, Users } from "@phosphor-icons/react/dist/ssr";
-import { Plus } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr/ArrowRight";
+import { ChartLineUp } from "@phosphor-icons/react/dist/ssr/ChartLineUp";
+import { Gavel } from "@phosphor-icons/react/dist/ssr/Gavel";
+import { Pulse } from "@phosphor-icons/react/dist/ssr/Pulse";
+import { ShieldWarning } from "@phosphor-icons/react/dist/ssr/ShieldWarning";
+import { SignIn } from "@phosphor-icons/react/dist/ssr/SignIn";
+import { Target } from "@phosphor-icons/react/dist/ssr/Target";
+import { Tray } from "@phosphor-icons/react/dist/ssr/Tray";
+import { Users } from "@phosphor-icons/react/dist/ssr/Users";
+import { Plus } from "@phosphor-icons/react/dist/ssr/Plus";
 import { PageHeader, Stat, StatGrid } from "@/components/admin/AdminShell";
 import { Badge, Button, Notice, Person, Skeleton } from "@/components/ui";
-import { api, ApiError, formatWhen } from "@/lib/client/api";
+import { formatWhen } from "@/lib/client/api";
+import { useApi } from "@/lib/client/useApi";
 
 interface Overview {
   stats: {
@@ -23,17 +31,9 @@ interface Overview {
 }
 
 export default function OverviewPage() {
-  const [data, setData] = useState<Overview | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [judge, setJudge] = useState<{ ok: boolean; version?: string; error?: string } | null>(null);
-
-  useEffect(() => {
-    const load = () => api.get<Overview>("/api/admin/overview").then(setData).catch((e) => setError(e instanceof ApiError ? e.message : "Could not load."));
-    load();
-    api.get<{ judge0: { ok: boolean; version?: string; error?: string } }>("/api/admin/health").then((r) => setJudge(r.judge0)).catch(() => setJudge({ ok: false }));
-    const t = window.setInterval(load, 30_000);
-    return () => window.clearInterval(t);
-  }, []);
+  const { data, error } = useApi<Overview>("/api/admin/overview", { refreshMs: 30_000 });
+  const health = useApi<{ judge0: { ok: boolean; version?: string; error?: string } }>("/api/admin/health");
+  const judge = health.data?.judge0 ?? (health.error ? { ok: false } : null);
 
   const s = data?.stats;
   return (

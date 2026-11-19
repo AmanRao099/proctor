@@ -2,7 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Eye, EyeSlash } from "@phosphor-icons/react/dist/ssr";
+import { Eye } from "@phosphor-icons/react/dist/ssr/Eye";
+import { EyeSlash } from "@phosphor-icons/react/dist/ssr/EyeSlash";
 import { Button, Field, Input, Notice } from "@/components/ui";
 import { api, ApiError } from "@/lib/client/api";
 import type { SessionUser } from "@/lib/shared/types";

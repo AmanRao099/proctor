@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DownloadSimple, X } from "@phosphor-icons/react/dist/ssr";
+import { DownloadSimple } from "@phosphor-icons/react/dist/ssr/DownloadSimple";
+import { X } from "@phosphor-icons/react/dist/ssr/X";
 import { Badge, Button, Dialog, Skeleton, cx } from "@/components/ui";
 import { api, ApiError, formatDuration, formatWhen } from "@/lib/client/api";
 import { performanceAxes, problemAverages, problemAxes } from "@/lib/client/radar";

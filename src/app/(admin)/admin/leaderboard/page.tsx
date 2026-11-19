@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { DownloadSimple, MagnifyingGlass, Trophy } from "@phosphor-icons/react/dist/ssr";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { DownloadSimple } from "@phosphor-icons/react/dist/ssr/DownloadSimple";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
+import { Trophy } from "@phosphor-icons/react/dist/ssr/Trophy";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { ResultsBoard, downloadText } from "@/components/admin/ResultsBoard";
 import { Button, Input, Person, Notice, Select, Skeleton, cx } from "@/components/ui";
+import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 
 interface Row {
@@ -15,18 +18,17 @@ interface Row {
 interface Data { rows: Row[]; tests: { id: string; title: string; window: string; starts_at: string; started: number }[] }
 
 export default function LeaderboardPage() {
-  const [data, setData] = useState<Data | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error } = useApi<Data>("/api/admin/leaderboard");
   const [scope, setScope] = useState("overall");
   const [q, setQ] = useState("");
-
+  // Open on the live test's board when one is running, once.
+  const picked = useRef(false);
   useEffect(() => {
-    api.get<Data>("/api/admin/leaderboard").then((d) => {
-      setData(d);
-      const live = d.tests.find((t) => t.window === "live");
-      if (live) setScope(live.id);
-    }).catch((e) => setError(e instanceof ApiError ? e.message : "Could not load."));
-  }, []);
+    if (!data || picked.current) return;
+    picked.current = true;
+    const live = data.tests.find((t) => t.window === "live");
+    if (live) setScope(live.id);
+  }, [data]);
 
   const rows = useMemo(() => (data?.rows ?? []).filter((r) => !q || `${r.name} ${r.username}`.toLowerCase().includes(q.toLowerCase())), [data, q]);
 

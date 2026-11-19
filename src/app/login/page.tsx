@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Browser, Camera, ShieldCheck, SpeakerSlash, WifiHigh } from "@phosphor-icons/react/dist/ssr";
+import { Browser } from "@phosphor-icons/react/dist/ssr/Browser";
+import { Camera } from "@phosphor-icons/react/dist/ssr/Camera";
+import { ShieldCheck } from "@phosphor-icons/react/dist/ssr/ShieldCheck";
+import { SpeakerSlash } from "@phosphor-icons/react/dist/ssr/SpeakerSlash";
+import { WifiHigh } from "@phosphor-icons/react/dist/ssr/WifiHigh";
 import { Wordmark } from "@/components/TopBar";
 import { LoginForm } from "./LoginForm";
 

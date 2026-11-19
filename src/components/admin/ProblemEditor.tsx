@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CaretDown, CaretRight, Copy, Eye, EyeSlash, Plus, Trash } from "@phosphor-icons/react/dist/ssr";
+import { CaretDown } from "@phosphor-icons/react/dist/ssr/CaretDown";
+import { CaretRight } from "@phosphor-icons/react/dist/ssr/CaretRight";
+import { Copy } from "@phosphor-icons/react/dist/ssr/Copy";
+import { Eye } from "@phosphor-icons/react/dist/ssr/Eye";
+import { EyeSlash } from "@phosphor-icons/react/dist/ssr/EyeSlash";
+import { Plus } from "@phosphor-icons/react/dist/ssr/Plus";
+import { Trash } from "@phosphor-icons/react/dist/ssr/Trash";
 import { Button, Field, Input, Select, Textarea, cx } from "@/components/ui";
 import { LANGUAGES, LANGUAGE_KEYS, type Language } from "@/lib/shared/languages";
 import { DIFFICULTIES, type AdminProblem } from "@/lib/shared/types";

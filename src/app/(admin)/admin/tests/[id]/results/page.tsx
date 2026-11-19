@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft } from "@phosphor-icons/react/dist/ssr/ArrowLeft";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { ResultsBoard } from "@/components/admin/ResultsBoard";
 import { api } from "@/lib/client/api";

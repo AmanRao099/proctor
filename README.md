@@ -106,6 +106,19 @@ npm run dev                     # http://localhost:3100
 
 Set `MONGODB_URI=mongodb://127.0.0.1:27018` in `.env.local` when using `db:memory`.
 
+### Speed: dev vs production
+
+`npm run dev` compiles each page the first time it is opened (Turbopack keeps
+that to about a second). For a fast, realistic run use a production build:
+
+```bash
+npm run build && npm start          # http://localhost:3100
+```
+
+Measured locally (admin console, 8 pages): production first load 0.5 s,
+page-to-page about 0.1 s; dev (Turbopack) first load about 4.5 s, first visit
+to each page about 1.5 s.
+
 ## Deploy
 
 Environment (see `.env.example`): `MONGODB_URI`, `MONGODB_DB`, `SESSION_SECRET`,

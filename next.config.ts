@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Self-contained server bundle for the Docker image (see Dockerfile).
   output: "standalone",
+  // Lets a production build run beside a dev server without sharing .next.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+  experimental: {
+    // Belt and braces with the per-icon imports: never compile a whole icon set.
+    optimizePackageImports: ["@phosphor-icons/react"],
+  },
   poweredByHeader: false,
   serverExternalPackages: ["mongodb", "bcryptjs"],
   async headers() {

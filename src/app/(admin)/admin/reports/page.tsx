@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DownloadSimple, FilePdf, MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
+import { DownloadSimple } from "@phosphor-icons/react/dist/ssr/DownloadSimple";
+import { FilePdf } from "@phosphor-icons/react/dist/ssr/FilePdf";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { downloadText, sheetCsv } from "@/components/admin/ResultsBoard";
 import { Button, Field, Input, Notice, Select, Toggle } from "@/components/ui";

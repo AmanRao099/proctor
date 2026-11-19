@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MagnifyingGlass, Plus } from "@phosphor-icons/react/dist/ssr";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
+import { Plus } from "@phosphor-icons/react/dist/ssr/Plus";
 import { Badge, Button, Dialog, Input, Notice, Select, Skeleton } from "@/components/ui";
 import { api, ApiError } from "@/lib/client/api";
 import { DIFFICULTIES, type AdminProblem } from "@/lib/shared/types";

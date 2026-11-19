@@ -3,9 +3,17 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  Code, FileText, GearSix, Gavel, List, Pulse, SignOut, SquaresFour, Trophy, Users, X,
-} from "@phosphor-icons/react/dist/ssr";
+import { Code } from "@phosphor-icons/react/dist/ssr/Code";
+import { FileText } from "@phosphor-icons/react/dist/ssr/FileText";
+import { GearSix } from "@phosphor-icons/react/dist/ssr/GearSix";
+import { Gavel } from "@phosphor-icons/react/dist/ssr/Gavel";
+import { List } from "@phosphor-icons/react/dist/ssr/List";
+import { Pulse } from "@phosphor-icons/react/dist/ssr/Pulse";
+import { SignOut } from "@phosphor-icons/react/dist/ssr/SignOut";
+import { SquaresFour } from "@phosphor-icons/react/dist/ssr/SquaresFour";
+import { Trophy } from "@phosphor-icons/react/dist/ssr/Trophy";
+import { Users } from "@phosphor-icons/react/dist/ssr/Users";
+import { X } from "@phosphor-icons/react/dist/ssr/X";
 import { api } from "@/lib/client/api";
 import type { SessionUser } from "@/lib/shared/types";
 import { Wordmark } from "@/components/TopBar";

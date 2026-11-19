@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Plus } from "@phosphor-icons/react/dist/ssr";
+import { Plus } from "@phosphor-icons/react/dist/ssr/Plus";
 import { Badge, Button, Notice, Skeleton } from "@/components/ui";
+import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 import type { TestWindow } from "@/lib/shared/types";
 
@@ -31,14 +32,8 @@ function status(r: Row): { label: string; tone: "neutral" | "accent" | "ok" | "w
 }
 
 export function TestsList() {
-  const [rows, setRows] = useState<Row[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.get<{ tests: Row[] }>("/api/admin/tests")
-      .then((r) => setRows(r.tests))
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Could not load tests."));
-  }, []);
+  const { data, error } = useApi<{ tests: Row[] }>("/api/admin/tests");
+  const rows = data ? data.tests : null;
 
   return (
     <div className="flex flex-col gap-6">

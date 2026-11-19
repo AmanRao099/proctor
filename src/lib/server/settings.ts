@@ -32,10 +32,17 @@ export function normalizeSettings(raw: unknown): PlatformSettings {
   };
 }
 
+// Read on most admin requests; a few seconds of staleness across processes is
+// fine, and this process's own saves update it immediately.
+let cached: { value: PlatformSettings; at: number } | null = null;
+const TTL_MS = 10_000;
+
 export async function getSettings(): Promise<PlatformSettings> {
+  if (cached && Date.now() - cached.at < TTL_MS) return cached.value;
   const d = await db();
   const doc = await d.collection("settings").findOne({ _id: "platform" as never });
-  return normalizeSettings(doc);
+  cached = { value: normalizeSettings(doc), at: Date.now() };
+  return cached.value;
 }
 
 export async function saveSettings(next: PlatformSettings) {
@@ -45,4 +52,5 @@ export async function saveSettings(next: PlatformSettings) {
     { $set: { ...next, updated_at: new Date() } },
     { upsert: true },
   );
+  cached = { value: next, at: Date.now() };
 }

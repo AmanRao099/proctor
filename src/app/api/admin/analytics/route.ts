@@ -4,7 +4,7 @@ import { handle, ok } from "@/lib/server/http";
 import { lockoutStatus } from "@/lib/server/lockout";
 import type { TestDoc } from "@/lib/server/models";
 import { getSettings } from "@/lib/server/settings";
-import { buildSheet, type Sheet, type SheetRow } from "@/lib/server/sheet";
+import { buildSheets, type Sheet, type SheetRow } from "@/lib/server/sheet";
 
 export const dynamic = "force-dynamic";
 
@@ -79,7 +79,7 @@ export const GET = handle(async (req: Request) => {
     .find({ status: "published", starts_at: { $gte: since } })
     .sort({ starts_at: -1 })
     .toArray();
-  const sheets = await Promise.all(published.map((t) => buildSheet(d, t, pass_mark, now)));
+  const sheets = await buildSheets(d, published, pass_mark, now);
   const options = sheets.map((s) => ({ id: s.test.id, title: s.test.title, starts_at: s.test.starts_at, students: s.summary.started }));
   const scoped = testParam === "all" ? sheets : sheets.filter((s) => s.test.id === testParam);
 

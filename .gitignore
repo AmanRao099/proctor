@@ -11,3 +11,4 @@ next-env.d.ts
 credentials-*.csv
 public/vendor/monaco/
 .data/
+.next-*/

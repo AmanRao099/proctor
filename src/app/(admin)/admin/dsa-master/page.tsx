@@ -3,14 +3,21 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import {
-  CalendarBlank, CaretDown, CaretRight, ChartBar, Code, FileText, Plus, ShieldWarning, UsersThree,
-} from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank } from "@phosphor-icons/react/dist/ssr/CalendarBlank";
+import { CaretDown } from "@phosphor-icons/react/dist/ssr/CaretDown";
+import { CaretRight } from "@phosphor-icons/react/dist/ssr/CaretRight";
+import { ChartBar } from "@phosphor-icons/react/dist/ssr/ChartBar";
+import { Code } from "@phosphor-icons/react/dist/ssr/Code";
+import { FileText } from "@phosphor-icons/react/dist/ssr/FileText";
+import { Plus } from "@phosphor-icons/react/dist/ssr/Plus";
+import { ShieldWarning } from "@phosphor-icons/react/dist/ssr/ShieldWarning";
+import { UsersThree } from "@phosphor-icons/react/dist/ssr/UsersThree";
 import { PageHeader, Stat, StatGrid } from "@/components/admin/AdminShell";
 import { ProblemBank } from "@/components/admin/ProblemBank";
 import { ResultsBoard } from "@/components/admin/ResultsBoard";
 import { TestsList } from "@/components/admin/TestsList";
 import { Badge, Button, Person, Notice, Select, Skeleton, cx } from "@/components/ui";
+import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 import type { Violation } from "@/lib/shared/types";
 
@@ -169,24 +176,11 @@ function DSAMaster() {
   const view = (VIEWS.some((v) => v.id === params.get("view")) ? params.get("view") : "round") as View;
   const [test, setTest] = useState(params.get("test") || "all");
   const [days, setDays] = useState(90);
-  const [data, setData] = useState<Analytics | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [groupBy, setGroupBy] = useState<"difficulties" | "topics">("difficulties");
-
   const needsAnalytics = view === "round" || view === "integrity" || view === "groups" || view === "results";
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      setData(await api.get<Analytics>(`/api/admin/analytics?test=${encodeURIComponent(test === "all" ? "all" : test)}&days=${days}`));
-      setError(null);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Could not load analytics.");
-    } finally {
-      setLoading(false);
-    }
-  }, [test, days]);
-  useEffect(() => { if (needsAnalytics) void load(); }, [load, needsAnalytics]);
+  const { data, error, loading } = useApi<Analytics>(
+    needsAnalytics ? `/api/admin/analytics?test=${encodeURIComponent(test === "all" ? "all" : test)}&days=${days}` : null,
+  );
 
   const setView = (v: View) => router.replace(`/admin/dsa-master?view=${v}`, { scroll: false });
   const resultsTest = test !== "all" ? test : data?.tests[0]?.id ?? "";

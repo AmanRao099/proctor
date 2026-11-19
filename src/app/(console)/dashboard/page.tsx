@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import {
-  ArrowRight, Browser, CalendarBlank, Camera, CheckCircle, Clock, Code, SpeakerSlash, Trophy, VideoCamera, WifiHigh,
-} from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr/ArrowRight";
+import { Browser } from "@phosphor-icons/react/dist/ssr/Browser";
+import { CalendarBlank } from "@phosphor-icons/react/dist/ssr/CalendarBlank";
+import { Camera } from "@phosphor-icons/react/dist/ssr/Camera";
+import { CheckCircle } from "@phosphor-icons/react/dist/ssr/CheckCircle";
+import { Clock } from "@phosphor-icons/react/dist/ssr/Clock";
+import { Code } from "@phosphor-icons/react/dist/ssr/Code";
+import { SpeakerSlash } from "@phosphor-icons/react/dist/ssr/SpeakerSlash";
+import { Trophy } from "@phosphor-icons/react/dist/ssr/Trophy";
+import { VideoCamera } from "@phosphor-icons/react/dist/ssr/VideoCamera";
+import { WifiHigh } from "@phosphor-icons/react/dist/ssr/WifiHigh";
 import { Badge, Button, Card, Dialog, EmptyState, Notice, Skeleton, Textarea, cx } from "@/components/ui";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 import type { AttemptState, SessionUser, TestWindow } from "@/lib/shared/types";

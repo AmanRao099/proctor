@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Books, Plus } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft } from "@phosphor-icons/react/dist/ssr/ArrowLeft";
+import { Books } from "@phosphor-icons/react/dist/ssr/Books";
+import { Plus } from "@phosphor-icons/react/dist/ssr/Plus";
 import { Badge, Button, Dialog, Field, Input, Notice, Skeleton, Textarea, Toggle } from "@/components/ui";
 import { api, ApiError } from "@/lib/client/api";
 import { DEFAULT_PROCTORING, type ProctoringSettings } from "@/lib/shared/proctoring";

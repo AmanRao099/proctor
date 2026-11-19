@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { SignOut } from "@phosphor-icons/react/dist/ssr";
+import { SignOut } from "@phosphor-icons/react/dist/ssr/SignOut";
 import { api } from "@/lib/client/api";
 import type { SessionUser } from "@/lib/shared/types";
 import { Avatar } from "./ui";

@@ -3,9 +3,15 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  ArrowCounterClockwise, ArrowsOut, CheckCircle, Clock, CloudCheck, CloudSlash, Play, ShieldWarning, UploadSimple,
-} from "@phosphor-icons/react/dist/ssr";
+import { ArrowCounterClockwise } from "@phosphor-icons/react/dist/ssr/ArrowCounterClockwise";
+import { ArrowsOut } from "@phosphor-icons/react/dist/ssr/ArrowsOut";
+import { CheckCircle } from "@phosphor-icons/react/dist/ssr/CheckCircle";
+import { Clock } from "@phosphor-icons/react/dist/ssr/Clock";
+import { CloudCheck } from "@phosphor-icons/react/dist/ssr/CloudCheck";
+import { CloudSlash } from "@phosphor-icons/react/dist/ssr/CloudSlash";
+import { Play } from "@phosphor-icons/react/dist/ssr/Play";
+import { ShieldWarning } from "@phosphor-icons/react/dist/ssr/ShieldWarning";
+import { UploadSimple } from "@phosphor-icons/react/dist/ssr/UploadSimple";
 import { CodeEditor } from "@/components/exam/CodeEditor";
 import { ResultPanel, type Outcome } from "@/components/exam/ResultPanel";
 import { Statement } from "@/components/exam/Statement";

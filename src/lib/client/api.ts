@@ -9,6 +9,12 @@ export class ApiError extends Error {
 
 type Json = Record<string, unknown>;
 
+/** Called after every successful write, so cached reads can be dropped. */
+const writeHooks = new Set<() => void>();
+export function onApiWrite(fn: () => void) {
+  writeHooks.add(fn);
+}
+
 async function request<T>(method: string, url: string, data?: unknown, timeoutMs = 60_000): Promise<T> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -40,6 +46,7 @@ async function request<T>(method: string, url: string, data?: unknown, timeoutMs
     }
     throw new ApiError(res.status, String(payload.error || `Request failed (${res.status})`), payload.code as string | undefined);
   }
+  if (method !== "GET") writeHooks.forEach((fn) => fn());
   return payload as T;
 }
 

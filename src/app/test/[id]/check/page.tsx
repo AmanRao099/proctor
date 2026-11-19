@@ -3,9 +3,17 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  ArrowLeft, ArrowsOut, Browser, Camera, Check, Clock, Code, Microphone, UserFocus, Warning, X,
-} from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft } from "@phosphor-icons/react/dist/ssr/ArrowLeft";
+import { ArrowsOut } from "@phosphor-icons/react/dist/ssr/ArrowsOut";
+import { Browser } from "@phosphor-icons/react/dist/ssr/Browser";
+import { Camera } from "@phosphor-icons/react/dist/ssr/Camera";
+import { Check } from "@phosphor-icons/react/dist/ssr/Check";
+import { Clock } from "@phosphor-icons/react/dist/ssr/Clock";
+import { Code } from "@phosphor-icons/react/dist/ssr/Code";
+import { Microphone } from "@phosphor-icons/react/dist/ssr/Microphone";
+import { UserFocus } from "@phosphor-icons/react/dist/ssr/UserFocus";
+import { Warning } from "@phosphor-icons/react/dist/ssr/Warning";
+import { X } from "@phosphor-icons/react/dist/ssr/X";
 import { Wordmark } from "@/components/TopBar";
 import { Button, Notice, Skeleton, cx } from "@/components/ui";
 import { api, ApiError, formatWhen } from "@/lib/client/api";

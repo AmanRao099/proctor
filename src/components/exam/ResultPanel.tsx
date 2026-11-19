@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, LockSimple, XCircle } from "@phosphor-icons/react/dist/ssr";
+import { CheckCircle } from "@phosphor-icons/react/dist/ssr/CheckCircle";
+import { LockSimple } from "@phosphor-icons/react/dist/ssr/LockSimple";
+import { XCircle } from "@phosphor-icons/react/dist/ssr/XCircle";
 import { Textarea, cx } from "@/components/ui";
 import type { CaseResult, CaseStatus, CustomRunResult, JudgeResult } from "@/lib/shared/types";
 

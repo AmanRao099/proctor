@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DownloadSimple, MagnifyingGlass, UserPlus } from "@phosphor-icons/react/dist/ssr";
+import { DownloadSimple } from "@phosphor-icons/react/dist/ssr/DownloadSimple";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
+import { UserPlus } from "@phosphor-icons/react/dist/ssr/UserPlus";
 import { Badge, Button, Person, Dialog, Field, Input, Notice, Skeleton, Textarea, cx } from "@/components/ui";
+import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 
 interface Candidate {
@@ -53,12 +56,10 @@ export default function CandidatesPage() {
   const [created, setCreated] = useState<Created[] | null>(null);
   const [reset, setReset] = useState<{ username: string; password: string } | null>(null);
 
-  const load = useCallback(() => {
-    api.get<{ candidates: Candidate[] }>("/api/admin/candidates")
-      .then((r) => setList(r.candidates))
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Could not load candidates."));
-  }, []);
-  useEffect(load, [load]);
+  const cand = useApi<{ candidates: Candidate[] }>("/api/admin/candidates");
+  useEffect(() => { if (cand.data) setList(cand.data.candidates); }, [cand.data]);
+  useEffect(() => { if (cand.error) setError(cand.error); }, [cand.error]);
+  const load = cand.reload;
 
   const parsed = useMemo(() => parseRows(text), [text]);
   const shown = useMemo(() => {

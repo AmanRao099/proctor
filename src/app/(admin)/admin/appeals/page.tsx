@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { Badge, Button, Person, Notice, Select, Skeleton, Textarea } from "@/components/ui";
+import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 
 interface Appeal {
@@ -79,15 +80,8 @@ function AppealCard({ a, onDone }: { a: Appeal; onDone: () => void }) {
 
 export default function AppealsPage() {
   const [status, setStatus] = useState("pending");
-  const [list, setList] = useState<Appeal[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const load = useCallback(() => {
-    setList(null);
-    api.get<{ appeals: Appeal[] }>(`/api/admin/appeals?status=${status}`)
-      .then((r) => setList(r.appeals))
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Could not load appeals."));
-  }, [status]);
-  useEffect(load, [load]);
+  const { data, error, reload: load } = useApi<{ appeals: Appeal[] }>(`/api/admin/appeals?status=${status}`);
+  const list = data ? data.appeals : null;
 
   return (
     <div>

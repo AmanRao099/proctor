@@ -3,7 +3,7 @@ import { db } from "@/lib/server/db";
 import { handle, ok } from "@/lib/server/http";
 import type { TestDoc } from "@/lib/server/models";
 import { getSettings } from "@/lib/server/settings";
-import { buildSheet } from "@/lib/server/sheet";
+import { buildSheets } from "@/lib/server/sheet";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export const GET = handle(async () => {
   const { pass_mark } = await getSettings();
   const now = new Date();
   const tests = await d.collection<TestDoc>("tests").find({ status: "published" }).sort({ starts_at: -1 }).toArray();
-  const sheets = await Promise.all(tests.map((t) => buildSheet(d, t, pass_mark, now)));
+  const sheets = await buildSheets(d, tests, pass_mark, now);
 
   const agg = new Map<string, {
     user_id: string; name: string; username: string; tests: number; marks: number; possible: number;

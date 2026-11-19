@@ -1,23 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
 import { Badge, Button, Dialog, Input, Select, Skeleton } from "@/components/ui";
-import { api } from "@/lib/client/api";
+import { useApi } from "@/lib/client/useApi";
 import { DIFFICULTIES, type AdminProblem } from "@/lib/shared/types";
 
 export type BankProblem = AdminProblem & { used_in: number };
 
 export function useBank(open = true) {
-  const [list, setList] = useState<BankProblem[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const reload = () => {
-    api.get<{ problems: BankProblem[] }>("/api/admin/problems")
-      .then((r) => { setList(r.problems); setError(null); })
-      .catch((e) => setError(e?.message || "Could not load the problem bank."));
-  };
-  useEffect(() => { if (open) reload(); }, [open]);
-  return { list, error, reload };
+  const { data, error, reload } = useApi<{ problems: BankProblem[] }>(open ? "/api/admin/problems" : null);
+  return { list: data ? data.problems : null, error, reload };
 }
 
 const TONE: Record<string, "ok" | "warn" | "bad"> = { Easy: "ok", Medium: "warn", Hard: "bad" };

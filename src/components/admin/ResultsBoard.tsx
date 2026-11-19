@@ -1,8 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DownloadSimple, FilePdf, MagnifyingGlass, ShieldWarning, Trophy } from "@phosphor-icons/react/dist/ssr";
+import { DownloadSimple } from "@phosphor-icons/react/dist/ssr/DownloadSimple";
+import { FilePdf } from "@phosphor-icons/react/dist/ssr/FilePdf";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
+import { ShieldWarning } from "@phosphor-icons/react/dist/ssr/ShieldWarning";
+import { Trophy } from "@phosphor-icons/react/dist/ssr/Trophy";
 import { Badge, Button, Person, Input, Notice, Select, Skeleton, cx } from "@/components/ui";
+import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatDuration, formatWhen } from "@/lib/client/api";
 import type { Sheet, SheetRow } from "@/lib/shared/sheet";
 import { Stat, StatGrid } from "./AdminShell";
@@ -51,31 +56,15 @@ export function sheetCsv(sheet: Sheet) {
  * report. Ported from MyCodeBud's DSALiveLeaderboard + TestResultsPanel.
  */
 export function ResultsBoard({ testId, live = true }: { testId: string; live?: boolean }) {
-  const [sheet, setSheet] = useState<Sheet | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error, reload: load } = useApi<Sheet>(`/api/admin/tests/${testId}/results`, { refreshMs: live ? 15_000 : undefined });
+  const sheet = data ?? null;
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | SheetRow["state"] | "flagged" | "passed" | "failed">("all");
   const [open, setOpen] = useState<string | null>(null);
   const [updated, setUpdated] = useState<Date | null>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
 
-  const load = useCallback(async () => {
-    try {
-      setSheet(await api.get<Sheet>(`/api/admin/tests/${testId}/results`));
-      setUpdated(new Date());
-      setError(null);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Could not load results.");
-    }
-  }, [testId]);
-
-  useEffect(() => {
-    setSheet(null);
-    void load();
-    if (!live) return;
-    const t = window.setInterval(() => void load(), 15_000);
-    return () => window.clearInterval(t);
-  }, [load, live]);
+  useEffect(() => { if (data) setUpdated(new Date()); }, [data]);
 
   const rows = useMemo(() => (sheet?.rows ?? []).filter((r) => {
     if (q && !`${r.name} ${r.username} ${r.email}`.toLowerCase().includes(q.toLowerCase())) return false;
