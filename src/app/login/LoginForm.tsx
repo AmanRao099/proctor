@@ -16,24 +16,70 @@ export function LoginForm() {
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ticket, setTicket] = useState<string | null>(null);
+  const [code, setCode] = useState("");
   const expired = params.get("reason") === "expired";
+
+  function go(user: SessionUser) {
+    const next = params.get("next");
+      // Only same-site paths, and only into the area this role may use.
+      const safe = next && next.startsWith("/") && !next.startsWith("//")
+        && (user.role === "admin" ? next.startsWith("/admin") : !next.startsWith("/admin"));
+    router.replace(safe ? next : user.role === "admin" ? "/admin" : "/dashboard");
+    router.refresh();
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      const { user } = await api.post<{ user: SessionUser }>("/api/auth/login", { username, password });
-      const next = params.get("next");
-      // Only same-site paths, and only into the area this role may use.
-      const safe = next && next.startsWith("/") && !next.startsWith("//")
-        && (user.role === "admin" ? next.startsWith("/admin") : !next.startsWith("/admin"));
-      router.replace(safe ? next : user.role === "admin" ? "/admin" : "/dashboard");
-      router.refresh();
+      if (ticket) {
+        const { user } = await api.post<{ user: SessionUser }>("/api/auth/login/code", { ticket, code });
+        go(user);
+        return;
+      }
+      const res = await api.post<{ user?: SessionUser; totp_required?: boolean; ticket?: string }>("/api/auth/login", { username, password });
+      if (res.totp_required && res.ticket) {
+        setTicket(res.ticket);
+        setBusy(false);
+        return;
+      }
+      go(res.user!);
     } catch (err) {
+      if (err instanceof ApiError && err.code === "ticket_expired") {
+        setTicket(null);
+        setCode("");
+      }
       setError(err instanceof ApiError ? err.message : "Sign in failed. Try again.");
       setBusy(false);
     }
+  }
+
+  if (ticket) {
+    return (
+      <form onSubmit={submit} className="mt-8 flex flex-col gap-5" noValidate>
+        <Notice tone="accent" title="Two-step sign-in">Open your authenticator app and enter the 6-digit code for this account.</Notice>
+        <Field label="Authentication code" error={error}>
+          {(id) => (
+            <Input
+              id={id}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              placeholder="123456"
+              className="h-12 text-center text-xl tracking-[0.4em] tabular"
+            />
+          )}
+        </Field>
+        <Button type="submit" variant="primary" busy={busy} disabled={code.length !== 6} className="h-11 w-full">Verify and sign in</Button>
+        <button type="button" onClick={() => { setTicket(null); setCode(""); setError(null); }} className="text-sm text-muted hover:text-ink">
+          Use a different account
+        </button>
+      </form>
+    );
   }
 
   return (

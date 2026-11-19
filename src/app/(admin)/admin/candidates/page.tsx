@@ -149,6 +149,7 @@ export default function CandidatesPage() {
                   <td className="px-3 py-3 text-xs text-muted">{c.last_login_at ? formatWhen(c.last_login_at) : "Never"}</td>
                   <td className="px-5 py-3 text-right">
                     <div className="inline-flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => patch(c, { unlock: true })} title="Lift a lock from wrong-password attempts">Unlock sign-in</Button>
                       <Button size="sm" variant="ghost" onClick={() => patch(c, { reset_password: true })}>Reset password</Button>
                       <Button size="sm" variant="ghost" onClick={() => patch(c, { disabled: !c.disabled })}>{c.disabled ? "Enable" : "Disable"}</Button>
                     </div>

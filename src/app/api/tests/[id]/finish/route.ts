@@ -7,6 +7,9 @@ import { followupCorrect, scoreOf, type AttemptDoc, type BestDoc } from "@/lib/s
 import { isLanguage } from "@/lib/shared/languages";
 import { normalizeProctoring } from "@/lib/shared/proctoring";
 
+// Judging waits on Judge0; allow up to a minute on Vercel.
+export const maxDuration = 60;
+
 type Ctx = { params: Promise<{ id: string }> };
 
 const schema = z.object({

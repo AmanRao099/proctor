@@ -18,6 +18,7 @@ import { ColumnChart } from "@/components/charts/Charts";
 import { Badge, Button, Card, EmptyState, Illustration, Notice, Person, Skeleton, cx } from "@/components/ui";
 import { formatWhen } from "@/lib/client/api";
 import { useApi } from "@/lib/client/useApi";
+import { greetingFor, useNow } from "@/lib/client/useNow";
 import type { SessionUser } from "@/lib/shared/types";
 
 interface Overview {
@@ -41,10 +42,6 @@ const dayFmt = new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numer
 const shortFmt = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" });
 const dayNum = new Intl.DateTimeFormat(undefined, { day: "numeric" });
 
-function greeting() {
-  const h = new Date().getHours();
-  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
-}
 
 function Kpi({ label, value, icon, foot, tone }: { label: string; value: React.ReactNode; icon: React.ReactNode; foot?: React.ReactNode; tone?: "accent" }) {
   return (
@@ -91,7 +88,9 @@ function MiniStat({ icon, label, value, href, tone }: { icon: React.ReactNode; l
 export default function OverviewPage() {
   const { data, error } = useApi<Overview>("/api/admin/overview", { refreshMs: 30_000 });
   const me = useApi<{ user: SessionUser }>("/api/auth/me");
+  const twoStep = useApi<{ enabled: boolean }>("/api/admin/2fa");
   const s = data?.stats;
+  const now = useNow();
   const firstName = me.data?.user.name.split(/\s+/)[0];
 
   return (
@@ -99,9 +98,9 @@ export default function OverviewPage() {
       <Card className="relative overflow-hidden bg-gradient-to-br from-accent-soft via-surface to-surface">
         <div className="grid items-center gap-6 p-6 sm:p-8 md:grid-cols-[1fr_auto]">
           <div className="min-w-0">
-            <p className="text-sm text-muted">{dayFmt.format(new Date())}</p>
+            <p className="h-5 text-sm text-muted">{now ? dayFmt.format(now) : ""}</p>
             <h1 className="mt-1 text-[28px] font-semibold leading-tight tracking-tight text-ink">
-              {greeting()}{firstName ? `, ${firstName}` : ""}
+              {greetingFor(now)}{firstName ? `, ${firstName}` : ""}
             </h1>
             <p className="mt-2 max-w-lg text-sm text-ink-2">
               {!s ? "Loading today's picture." : s.writing_now
@@ -119,6 +118,15 @@ export default function OverviewPage() {
         </div>
       </Card>
 
+      {twoStep.data && !twoStep.data.enabled ? (
+        <Notice
+          tone="warn"
+          title="Protect your admin account"
+          action={<Link href="/admin/settings?tab=security"><Button size="sm" variant="primary">Turn on two-step sign-in</Button></Link>}
+        >
+          An admin can see every student&apos;s code and results. Add an authenticator code so a stolen password alone is not enough.
+        </Notice>
+      ) : null}
       {error ? <Notice tone="bad" title="Could not load the overview">{error}</Notice> : null}
       {!s && !error ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-36" />)}</div>

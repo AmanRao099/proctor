@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { generatePassword, hashPassword, requireUser, type UserDoc } from "@/lib/server/auth";
+import { generatePassword, hashPassword, requireUser, unlockLogin, type UserDoc } from "@/lib/server/auth";
 import { db, oid } from "@/lib/server/db";
 import { body, handle, HttpError, ok } from "@/lib/server/http";
 
@@ -8,6 +8,8 @@ type Ctx = { params: Promise<{ id: string }> };
 const patchSchema = z.object({
   disabled: z.boolean().optional(),
   reset_password: z.boolean().optional(),
+  /** Lift login locks from wrong-password attempts. */
+  unlock: z.boolean().optional(),
   name: z.string().trim().min(1).max(120).optional(),
 });
 
@@ -30,8 +32,10 @@ export const PATCH = handle(async (req: Request, ctx: Ctx) => {
     set.password_hash = await hashPassword(password);
     set.sid = null;
   }
-  const res = await d.collection<UserDoc>("users").updateOne({ _id: id, role: "candidate" }, { $set: set });
-  if (!res.matchedCount) throw new HttpError(404, "Candidate not found.");
+  const target = await d.collection<UserDoc>("users").findOne({ _id: id, role: "candidate" }, { projection: { username: 1 } });
+  if (!target) throw new HttpError(404, "Candidate not found.");
+  if (Object.keys(set).length) await d.collection<UserDoc>("users").updateOne({ _id: id }, { $set: set });
+  if (input.unlock || input.reset_password) await unlockLogin(target.username);
   return ok({ password });
 });
 

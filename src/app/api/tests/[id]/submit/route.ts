@@ -6,6 +6,9 @@ import { Judge0Error } from "@/lib/server/judge0";
 import type { AttemptDoc } from "@/lib/server/models";
 import { isLanguage } from "@/lib/shared/languages";
 
+// Judging waits on Judge0; allow up to a minute on Vercel.
+export const maxDuration = 60;
+
 type Ctx = { params: Promise<{ id: string }> };
 
 const schema = z.object({

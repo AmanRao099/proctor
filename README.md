@@ -119,7 +119,33 @@ Measured locally (admin console, 8 pages): production first load 0.5 s,
 page-to-page about 0.1 s; dev (Turbopack) first load about 4.5 s, first visit
 to each page about 1.5 s.
 
-## Deploy
+## Deploy to Vercel
+
+1. Push this folder to a Git repo and import it in Vercel (framework: Next.js, root: this folder).
+2. Set these environment variables (Production and Preview):
+
+| Variable | Value |
+| --- | --- |
+| `MONGODB_URI` | Atlas connection string. Allow Vercel in Atlas Network Access (0.0.0.0/0, or Vercel's IPs). |
+| `MONGODB_DB` | A database name of its own, e.g. `proctor_client`. Never MyCodeBud's database name. |
+| `SESSION_SECRET` | 48+ random characters: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
+| `JUDGE0_URL` | `http://65.2.208.229:2358` |
+| `JUDGE0_AUTH_HEADER` | `X-Auth-Token` |
+| `JUDGE0_AUTH_TOKEN` | the Judge0 token |
+| `NEXT_PUBLIC_APP_NAME` | the product name shown in the UI |
+
+3. Deploy. Functions run in Mumbai (`bom1`, see `vercel.json`) next to Judge0 on EC2.
+4. Create the first admin from your machine, pointing at the same database:
+   `MONGODB_URI="<atlas uri>" MONGODB_DB=proctor_client npm run seed:admin -- admin "Your Name"`
+5. Sign in at `/login`, then Settings > Security to turn on two-step sign-in.
+
+Notes:
+- Each Vercel instance keeps at most 5 MongoDB connections (`MONGODB_MAX_POOL` to change). An Atlas shared tier allows 500 in total, shared with anything else on the cluster.
+- Judge0 holds at most 100 queued submissions and each Submit sends one per test case. Bursts back off and retry for up to 25 s; a big round (hundreds of simultaneous submits) needs its own Judge0 or a bigger queue.
+- Judge0 is reached over plain HTTP from Vercel, so its token crosses the internet unencrypted. Acceptable for a demo; put Judge0 behind HTTPS (Caddy on the EC2 box) before real rounds.
+- The camera only works on HTTPS, which Vercel provides.
+
+## Deploy with Docker
 
 Environment (see `.env.example`): `MONGODB_URI`, `MONGODB_DB`, `SESSION_SECRET`,
 `JUDGE0_URL`, `JUDGE0_AUTH_HEADER`, `JUDGE0_AUTH_TOKEN`, `JUDGE0_MAX_CONCURRENCY`,

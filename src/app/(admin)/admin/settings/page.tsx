@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Gavel } from "@phosphor-icons/react/dist/ssr/Gavel";
+import { LockKey } from "@phosphor-icons/react/dist/ssr/LockKey";
 import { Microphone } from "@phosphor-icons/react/dist/ssr/Microphone";
 import { ShieldCheck } from "@phosphor-icons/react/dist/ssr/ShieldCheck";
 import { Stop } from "@phosphor-icons/react/dist/ssr/Stop";
@@ -10,16 +11,18 @@ import { PageHeader } from "@/components/admin/AdminShell";
 import { ProctoringForm } from "@/components/admin/ProctoringForm";
 import { Button, Card, Input, Notice, SectionCard, Segmented, SettingRow, Skeleton, Switch, cx } from "@/components/ui";
 import { api, ApiError } from "@/lib/client/api";
+import { useApi } from "@/lib/client/useApi";
 import { LEVEL_LABELS, MIC_LEVELS, SENSITIVITY_LEVELS, asLevel, type ProctoringSettings, type SensitivityLevel } from "@/lib/shared/proctoring";
 
 interface Settings { default_proctoring: ProctoringSettings; lockout_enabled: boolean; pass_mark: number }
 
-type Tab = "proctoring" | "room" | "lockout" | "scoring";
+type Tab = "proctoring" | "room" | "lockout" | "scoring" | "security";
 const TABS: { id: Tab; label: string; hint: string; icon: typeof Target }[] = [
   { id: "proctoring", label: "Proctoring defaults", hint: "What new tests watch for", icon: ShieldCheck },
   { id: "room", label: "Room check", hint: "Calibrate the microphone", icon: Microphone },
   { id: "lockout", label: "Lockout", hint: "After a forced hand-in", icon: Gavel },
   { id: "scoring", label: "Scoring", hint: "Pass mark", icon: Target },
+  { id: "security", label: "Security", hint: "Two-step sign-in", icon: LockKey },
 ];
 
 /**
@@ -114,6 +117,76 @@ function MicMeter() {
   );
 }
 
+/** Two-step sign-in for the signed-in admin: authenticator app codes (TOTP). */
+function SecurityPanel() {
+  const status = useApi<{ enabled: boolean }>("/api/admin/2fa");
+  const [setup, setSetup] = useState<{ secret: string; qr: string } | null>(null);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const enabled = status.data?.enabled;
+
+  async function act(action: "setup" | "enable" | "disable") {
+    setBusy(true);
+    setError(null);
+    setDone(null);
+    try {
+      const r = await api.post<{ secret?: string; qr?: string; enabled?: boolean }>("/api/admin/2fa", { action, code: code || undefined });
+      if (action === "setup") setSetup({ secret: r.secret!, qr: r.qr! });
+      else {
+        setSetup(null);
+        setCode("");
+        setDone(action === "enable" ? "Two-step sign-in is on. You will be asked for a code after your password." : "Two-step sign-in is off.");
+        void status.reload();
+      }
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <SectionCard title="Two-step sign-in" description="After your password, sign-in asks for a 6-digit code from an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, 1Password). A stolen password alone is then not enough.">
+      <SettingRow label="Status" description={enabled ? "On for your account." : "Off. Strongly recommended for every admin account."}>
+        <span className={cx("inline-flex h-7 items-center rounded-full px-3 text-xs font-semibold", enabled ? "bg-ok-soft text-ok" : "bg-warn-soft text-warn")}>
+          {enabled === undefined ? "Checking" : enabled ? "On" : "Off"}
+        </span>
+      </SettingRow>
+      <div className="py-5">
+        {done ? <p className="mb-3 text-sm text-ok">{done}</p> : null}
+        {error ? <p className="mb-3 text-sm text-bad">{error}</p> : null}
+        {!enabled && !setup ? (
+          <Button variant="primary" busy={busy} onClick={() => act("setup")}>Set up authenticator</Button>
+        ) : null}
+        {!enabled && setup ? (
+          <div className="grid gap-5 sm:grid-cols-[200px_1fr]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={setup.qr} alt="QR code for your authenticator app" className="h-[200px] w-[200px] rounded-ui border border-line bg-white p-2" />
+            <div className="grid content-start gap-3 text-sm">
+              <p>1. Scan this code with your authenticator app.</p>
+              <p className="text-muted">Cannot scan? Enter this key by hand: <span className="select-all break-all font-mono text-ink">{setup.secret}</span></p>
+              <p>2. Enter the 6-digit code it shows.</p>
+              <div className="flex gap-2">
+                <Input value={code} onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} inputMode="numeric" placeholder="123456" className="h-10 w-36 text-center tracking-[0.3em] tabular" aria-label="Authenticator code" />
+                <Button variant="primary" busy={busy} disabled={code.length !== 6} onClick={() => act("enable")}>Turn on</Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        {enabled ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Input value={code} onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} inputMode="numeric" placeholder="Current code" className="h-10 w-40 text-center tabular" aria-label="Authenticator code" />
+            <Button variant="danger" busy={busy} disabled={code.length !== 6} onClick={() => act("disable")}>Turn off</Button>
+          </div>
+        ) : null}
+        <p className="mt-4 text-xs text-muted">Lost your phone? Someone with server access runs <span className="font-mono">npm run seed:admin -- &lt;username&gt; &quot;&lt;name&gt;&quot;</span>, which resets the password and turns two-step sign-in off.</p>
+      </div>
+    </SectionCard>
+  );
+}
+
 const LADDER: [string, string][] = [
   ["1st", "15 minutes"], ["2nd", "1 hour"], ["3rd", "6 hours"], ["4th", "24 hours"], ["5th", "Barred until appeal"],
 ];
@@ -122,6 +195,10 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState<Settings | null>(null);
   const [s, setS] = useState<Settings | null>(null);
   const [tab, setTab] = useState<Tab>("proctoring");
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (t && TABS.some((x) => x.id === t)) setTab(t as Tab);
+  }, []);
   const [applyRunning, setApplyRunning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -219,6 +296,8 @@ export default function SettingsPage() {
                 </div>
               </SectionCard>
             ) : null}
+
+            {tab === "security" ? <SecurityPanel /> : null}
 
             {tab === "scoring" ? (
               <SectionCard title="Scoring" description="Used for pass rates, pass and fail on result sheets, and reports.">

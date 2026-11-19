@@ -26,12 +26,33 @@ const MAX_BATCH = 20; // max_submission_batch_size on the instance
 const HTTP_TIMEOUT_MS = 30_000;
 const POLL_INITIAL_MS = 150;
 const POLL_MAX_MS = 1000;
-const POLL_TIMEOUT_MS = 90_000;
+// Under Vercel the whole function has 60 s; leave room to answer.
+const POLL_TIMEOUT_MS = Number(process.env.JUDGE0_POLL_TIMEOUT_MS) || (process.env.VERCEL ? 50_000 : 90_000);
 
 // Instance ceilings (/config_info): cpu 15s max, wall 20s max, memory 512000 KB max.
 export const LIMITS = { cpuMax: 15, wallMax: 20, memoryMaxKb: 512_000 };
 
 export class Judge0Error extends Error {}
+
+/** Judge0's queue is full (it holds 100 submissions). Worth retrying. */
+class QueueFull extends Judge0Error {}
+
+/**
+ * POST with patience: a burst of hand-ins can fill Judge0's 100-slot queue
+ * for a few seconds. Back off with jitter and try again instead of failing
+ * the student's submit, within an overall budget.
+ */
+async function postWithRetry(path: string, payload: unknown, budgetMs = 25_000): Promise<unknown> {
+  const deadline = Date.now() + budgetMs;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await call(path, { method: "POST", body: JSON.stringify(payload) });
+    } catch (err) {
+      if (!(err instanceof QueueFull) || Date.now() > deadline) throw err;
+      await sleep(Math.min(4000, 500 * 2 ** attempt) + Math.random() * 500);
+    }
+  }
+}
 
 export interface Judge0Submission {
   source_code: string;
@@ -99,6 +120,7 @@ async function call(path: string, init?: RequestInit): Promise<unknown> {
     clearTimeout(timer);
   }
   if (res.status === 401) throw new Judge0Error("Judge0 rejected the auth token");
+  if (res.status === 503 || res.status === 429) throw new QueueFull(`Judge0 busy (HTTP ${res.status})`);
   if (res.status >= 400) {
     const text = await res.text().catch(() => "");
     throw new Judge0Error(`Judge0 HTTP ${res.status}: ${text.slice(0, 200)}`);
@@ -150,10 +172,7 @@ export async function runBatch(subs: Judge0Submission[]): Promise<Judge0Row[]> {
         memory_limit: Math.min(LIMITS.memoryMaxKb, s.memory_limit),
         redirect_stderr_to_stdout: false,
       }));
-      const body = (await call("/submissions/batch?base64_encoded=true", {
-        method: "POST",
-        body: JSON.stringify({ submissions: chunk }),
-      })) as { token?: string }[];
+      const body = (await postWithRetry("/submissions/batch?base64_encoded=true", { submissions: chunk })) as { token?: string }[];
       const tokens = Array.isArray(body) ? body.map((t) => t?.token) : [];
       if (!tokens.length || tokens.some((t) => !t)) throw new Judge0Error("Judge0 returned no tokens for a batch");
       out.push(...(await awaitTokens(tokens as string[])));

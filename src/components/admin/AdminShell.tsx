@@ -16,6 +16,7 @@ import { Users } from "@phosphor-icons/react/dist/ssr/Users";
 import { X } from "@phosphor-icons/react/dist/ssr/X";
 import { api } from "@/lib/client/api";
 import { useApi } from "@/lib/client/useApi";
+import { useNow } from "@/lib/client/useNow";
 import { Bell } from "@phosphor-icons/react/dist/ssr/Bell";
 import { Plus } from "@phosphor-icons/react/dist/ssr/Plus";
 
@@ -102,6 +103,7 @@ export function AdminShell({ user, children }: { user: SessionUser; children: Re
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const now = useNow();
   useEffect(() => setOpen(false), [pathname]);
   // Shared with the Overview page through the useApi cache: one request.
   const overview = useApi<{ stats: { writing_now: number; pending_appeals: number } }>("/api/admin/overview", { refreshMs: 30_000 });
@@ -163,7 +165,7 @@ export function AdminShell({ user, children }: { user: SessionUser; children: Re
 
       <div className="min-w-0">
         <div className="sticky top-0 z-20 hidden h-16 items-center gap-3 border-b border-line bg-bg/85 px-10 backdrop-blur lg:flex">
-          <p className="text-sm text-muted">{todayFmt.format(new Date())}</p>
+          <p className="text-sm text-muted">{now ? todayFmt.format(now) : ""}</p>
           <div className="ml-auto flex items-center gap-2">
             {counts && counts.writing > 0 ? (
               <Link href="/admin/active" className="inline-flex h-9 items-center gap-2 rounded-full border border-accent-line bg-accent-soft px-3 text-[13px] font-medium text-accent">

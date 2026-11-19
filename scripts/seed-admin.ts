@@ -3,7 +3,8 @@
  *
  *   npm run seed:admin -- <username> "<Full name>" [password]
  *
- * Without a password one is generated and printed once.
+ * Without a password one is generated and printed once. Running it also
+ * turns off two-step sign-in, which is the recovery path for a lost phone.
  */
 import { config } from "dotenv";
 import bcrypt from "bcryptjs";
@@ -32,7 +33,7 @@ async function main() {
     await users.updateOne(
       { username },
       {
-        $set: { name, role: "admin", password_hash: await bcrypt.hash(password, 10), sid: null, disabled: false },
+        $set: { name, role: "admin", password_hash: await bcrypt.hash(password, 10), sid: null, disabled: false, totp_enabled: false, totp_secret: null, totp_pending: null },
         $setOnInsert: { created_at: new Date() },
       },
       { upsert: true },

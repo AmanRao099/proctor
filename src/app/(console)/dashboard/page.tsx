@@ -16,6 +16,7 @@ import { WifiHigh } from "@phosphor-icons/react/dist/ssr/WifiHigh";
 import { AreaChart } from "@/components/charts/Charts";
 import { Badge, Button, Card, Dialog, EmptyState, Illustration, Notice, Skeleton, Textarea, cx } from "@/components/ui";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
+import { greetingFor, useNow } from "@/lib/client/useNow";
 import type { AttemptState, SessionUser, TestWindow } from "@/lib/shared/types";
 
 interface MyTest {
@@ -44,10 +45,6 @@ function statusOf(t: MyTest): { label: string; tone: "neutral" | "accent" | "ok"
   return { label: "Closed", tone: "neutral" };
 }
 
-function greeting() {
-  const h = new Date().getHours();
-  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
-}
 
 function untilText(iso: string) {
   const mins = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
@@ -118,6 +115,7 @@ export default function DashboardPage() {
   const live = tests?.filter((t) => t.can_start) ?? [];
   const upcoming = tests?.filter((t) => !t.can_start && t.window === "upcoming") ?? [];
   const past = tests?.filter((t) => !t.can_start && t.window !== "upcoming") ?? [];
+  const now = useNow();
   const firstName = user?.name.split(/\s+/)[0];
   const scored = (tests ?? []).filter((t) => t.score).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   const avg = scored.length ? Math.round(scored.reduce((x, t) => x + t.score!.percent, 0) / scored.length) : null;
@@ -131,7 +129,7 @@ export default function DashboardPage() {
         <Card className="relative overflow-hidden bg-gradient-to-br from-accent-soft via-surface to-surface">
           <div className="grid items-center gap-6 p-6 sm:p-8 md:grid-cols-[1fr_auto]">
             <div className="min-w-0">
-              <h1 className="text-[28px] font-semibold leading-tight tracking-tight">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
+              <h1 className="text-[28px] font-semibold leading-tight tracking-tight">{greetingFor(now)}{firstName ? `, ${firstName}` : ""}</h1>
               <p className="mt-2 max-w-md text-sm text-ink-2">
                 {tests === null ? "Loading your tests." : live.length
                   ? `You have ${live.length} test${live.length === 1 ? "" : "s"} open right now. Take a breath, check your setup, and start when you are ready.`

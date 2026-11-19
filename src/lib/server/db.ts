@@ -16,7 +16,11 @@ function client(): Promise<MongoClient> {
   if (!uri) throw new Error("MONGODB_URI is not set");
   if (!globalForMongo.__proctorMongo) {
     globalForMongo.__proctorMongo = new MongoClient(uri, {
-      maxPoolSize: 20,
+      // Serverless (Vercel) runs many small instances, each with its own pool.
+      // Keep each pool small so a busy round cannot exhaust the cluster's
+      // connection limit (Atlas shared tiers allow 500 in total).
+      maxPoolSize: Number(process.env.MONGODB_MAX_POOL) || (process.env.VERCEL ? 5 : 20),
+      maxIdleTimeMS: 60_000,
       serverSelectionTimeoutMS: 8000,
     }).connect().catch((err) => {
       // Do not cache a failed connect: the next request should try again.
