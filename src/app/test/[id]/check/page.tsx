@@ -107,8 +107,12 @@ export default function CheckPage() {
   }, []);
 
   const cameraNeeded = !!brief?.camera_required;
-  const fullscreenNeeded = settings?.require_fullscreen !== false && !!brief?.proctored;
-  const wantAudio = !!settings?.audio_detection_enabled && !!brief?.proctored;
+  // As MyCodeBud: fullscreen follows the settings even when the camera is off.
+  const fullscreenNeeded = !!settings && settings.require_fullscreen !== false;
+  // Camera and microphone are asked for together (MyCodeBud does the same), so
+  // an admin can switch on talking detection mid-test.
+  const wantAudio = cameraNeeded;
+  const micWatched = !!settings?.audio_detection_enabled && !!brief?.proctored;
 
   async function enableCamera() {
     setCamBusy(true);
@@ -188,14 +192,14 @@ export default function CheckPage() {
                 </div>
               ) : null}
 
-              {brief.proctored && settings ? (
+              {settings ? (
                 <div className="mt-4 rounded-card border border-line bg-surface p-5 shadow-card">
                   <h2 className="text-[15px] font-semibold">How this test is proctored</h2>
                   <ul className="mt-3 grid gap-2.5 text-sm text-ink-2 [&>li]:relative [&>li]:pl-4 [&>li]:before:absolute [&>li]:before:left-0 [&>li]:before:top-[8px] [&>li]:before:h-1.5 [&>li]:before:w-1.5 [&>li]:before:rounded-full [&>li]:before:bg-accent">
                     {settings.require_fullscreen ? <li>The test runs in fullscreen. Leaving it is recorded.</li> : null}
                     {settings.tab_switch_enabled ? <li>Switching tabs or apps is recorded.</li> : null}
                     {cameraNeeded ? <li>Your camera watches for your face{settings.multi_person_detection_enabled ? ", for other people" : ""}{settings.phone_detection_enabled ? " and for a phone" : ""}.</li> : null}
-                    {wantAudio ? <li>Sustained talking at your microphone is recorded.</li> : null}
+                    {micWatched ? <li>Sustained talking at your microphone is recorded.</li> : null}
                     <li>Pasting into the editor is disabled.</li>
                     <li>
                       After <span className="font-medium text-ink">{settings.max_violations}</span> recorded violations your test is handed in automatically.

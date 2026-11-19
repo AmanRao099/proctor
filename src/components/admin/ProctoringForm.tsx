@@ -47,8 +47,8 @@ export function ProctoringForm({
   return (
     <div className="grid gap-5">
       {hideMaster ? null : (
-        <SectionCard title="Proctoring mode" description="Off: no camera, no fullscreen lock, no tab-switch strikes. Paste stays blocked either way.">
-          <SettingRow label="Proctor this test" description="Students pass a camera check before the paper opens and are watched throughout.">
+        <SectionCard title="Proctoring mode" description="Off: no camera or microphone. Fullscreen, tab-switch, paste and shortcut rules still apply, as in MyCodeBud.">
+          <SettingRow label="Proctor this test" description="Students pass a camera and microphone check before the paper opens and are watched throughout.">
             <Switch label="Proctor this test" checked={proctored} onChange={setProctored} />
           </SettingRow>
         </SectionCard>

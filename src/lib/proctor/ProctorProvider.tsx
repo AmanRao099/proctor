@@ -496,7 +496,7 @@ export function ProctorProvider({ children }: { children: React.ReactNode }) {
       setState((p) => ({ ...p, cameraLive: false }));
       if (state.isMonitoring) addViolation("CRITICAL", why);
     };
-    const onEnded = dead("Camera stopped during the test");
+    const onEnded = dead("Camera stopped during the session");
     const onMute = dead("Camera stopped producing video (covered or disabled)");
     const onUnmute = () => setState((p) => ({ ...p, cameraLive: true }));
     track.addEventListener("ended", onEnded);
@@ -611,7 +611,7 @@ export function ProctorProvider({ children }: { children: React.ReactNode }) {
         struck = true;
         lastStrikeAt = now;
         setState((p) => ({ ...p, cameraLive: false, faceStatus: "no_face" }));
-        addViolation("CRITICAL", "Camera feed stopped. Check the camera is on, uncovered and not disabled.");
+        addViolation("CRITICAL", "Camera feed stopped — the video is not updating. Check the camera is on, uncovered and not disabled.");
       }
     }, LIVENESS_POLL_MS);
 
@@ -664,7 +664,7 @@ export function ProctorProvider({ children }: { children: React.ReactNode }) {
         noFace++; multiFace = 0; lookAway = 0;
         if (faceRequired && noFace >= noFaceFrames && canStrike()) {
           setState((p) => ({ ...p, faceStatus: "no_face" }));
-          strike("WARNING", "No face detected. Stay visible in the camera.");
+          strike("WARNING", "No face detected — stay visible in the camera");
           noFace = 0;
         }
         return;
@@ -678,7 +678,7 @@ export function ProctorProvider({ children }: { children: React.ReactNode }) {
         multiFace++; noFace = 0; lookAway = 0;
         if (multiFace >= level.multiFaceFrames && canStrike()) {
           setState((p) => ({ ...p, faceStatus: "multiple_faces" }));
-          strike("CRITICAL", `${extras + 1} faces detected. Only you may be present.`);
+          strike("CRITICAL", `${extras + 1} faces detected — only you may be present`);
           multiFace = 0;
         }
         return;
@@ -696,7 +696,7 @@ export function ProctorProvider({ children }: { children: React.ReactNode }) {
         lookAway++;
         if (lookAway >= level.lookAwayFrames && canStrike()) {
           setState((p) => ({ ...p, faceStatus: "looking_away" }));
-          strike("WARNING", "Looking away from the screen for a sustained period.");
+          strike("WARNING", "Looking away from the screen for a sustained period");
           lookAway = 0;
         }
       } else {
@@ -742,7 +742,7 @@ export function ProctorProvider({ children }: { children: React.ReactNode }) {
       if (loud >= level.fraction && Date.now() - lastStrikeAt > RESTRIKE_COOLDOWN_MS) {
         lastStrikeAt = Date.now();
         samples.length = 0;
-        addViolation("WARNING", "Sustained talking or noise at your microphone.");
+        addViolation("WARNING", "Sustained talking or noise detected at your microphone");
       }
     }, MIC_SAMPLE_MS);
     return () => {
@@ -792,7 +792,7 @@ export function ProctorProvider({ children }: { children: React.ReactNode }) {
         }
         if (seen >= PHONE_FRAMES && Date.now() - lastStrikeAt > RESTRIKE_COOLDOWN_MS) {
           lastStrikeAt = Date.now();
-          addViolation("CRITICAL", "Phone detected in the camera. Put the device away.");
+          addViolation("CRITICAL", "Phone detected in the camera — put the device away and keep it out of frame");
           seen = 0;
         }
       } else {
@@ -826,7 +826,7 @@ export function ProctorProvider({ children }: { children: React.ReactNode }) {
       window.clearTimeout(hiddenTimer);
       if (!document.hidden || settling()) return;
       hiddenTimer = window.setTimeout(() => {
-        if (active() && document.hidden) addViolation("CRITICAL", "Tab switched or window minimised");
+        if (active() && document.hidden) addViolation("CRITICAL", "Tab switched or window minimized");
       }, FOCUS_LOSS_GRACE_MS);
     };
     const onBlur = () => {
@@ -834,19 +834,19 @@ export function ProctorProvider({ children }: { children: React.ReactNode }) {
       window.clearTimeout(blurTimer);
       blurTimer = window.setTimeout(() => {
         if (active() && document.visibilityState === "visible" && !document.hasFocus()) {
-          addViolation("CRITICAL", "Focus left the test window (another app or window)");
+          addViolation("CRITICAL", "Lost focus — switched to another application");
         }
       }, FOCUS_LOSS_GRACE_MS);
     };
     const onFocus = () => window.clearTimeout(blurTimer);
     const onKey = (e: KeyboardEvent) => {
       if (!config.block_dev_tools || !active()) return;
-      const k = e.key.toLowerCase();
-      if ((e.ctrlKey || e.metaKey) && ["t", "w", "n", "r", "tab"].includes(k)) {
+      // Exactly MyCodeBud's rule: new tab, close, new window, reload, switch tab.
+      if ((e.ctrlKey || e.metaKey) && ["t", "w", "n", "r", "Tab"].includes(e.key)) {
         e.preventDefault();
-        addViolation("CRITICAL", "Blocked keyboard shortcut attempted");
+        addViolation("CRITICAL", "Prohibited keyboard shortcut attempted");
       }
-      if (e.key === "F12" || ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c"].includes(k))) {
+      if (e.key === "F12") {
         e.preventDefault();
         addViolation("CRITICAL", "Attempted to open developer tools");
       }
@@ -877,7 +877,7 @@ export function ProctorProvider({ children }: { children: React.ReactNode }) {
         lastFullscreenEnter.current = Date.now();
         return;
       }
-      addViolation("CRITICAL", "Left fullscreen during the test");
+      addViolation("CRITICAL", "Exited fullscreen mode during the test");
     };
     const html = document.documentElement;
     const prevOverscroll = [html.style.overscrollBehaviorX, document.body.style.overscrollBehaviorX];

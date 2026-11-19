@@ -147,10 +147,9 @@ export default function ExamPage() {
     const s = paper.proctoring;
     const proctored = paper.test.proctored;
     const camera = cameraRequired(proctored, s);
-    const effective: ProctoringSettings = proctored ? s : {
-      ...s, require_fullscreen: false, tab_switch_enabled: false, audio_detection_enabled: false,
-      face_detection_enabled: false, multi_person_detection_enabled: false, phone_detection_enabled: false,
-    };
+    // As in MyCodeBud: an unproctored test turns off only the camera and the
+    // microphone. Fullscreen, tab-switch, paste and shortcut rules still apply.
+    const effective: ProctoringSettings = proctored ? s : { ...s, audio_detection_enabled: false };
     const res = proctor.startMonitoring({ camera, settings: effective, requireFaceCheck: camera });
     if (!res.ok) {
       // A reload loses the stream and the face check: back through the check.
@@ -225,13 +224,14 @@ export default function ExamPage() {
 
   useEffect(() => {
     if (!warning) return;
-    const t = window.setTimeout(() => setWarning(null), 6000);
+    const t = window.setTimeout(() => setWarning(null), 4000);
     return () => window.clearTimeout(t);
   }, [warning]);
 
   // ── Admin changes to proctoring reach a running test ──────────────────────
   useEffect(() => {
-    if (!started || finished || !paper?.test.proctored) return;
+    if (!started || finished || !paper) return;
+    const proctored = paper.test.proctored;
     let applied = JSON.stringify(settings);
     const t = window.setInterval(async () => {
       try {
@@ -240,7 +240,7 @@ export default function ExamPage() {
         if (key === applied) return;
         applied = key;
         setSettings(res.proctoring);
-        proctor.updateSettings(res.proctoring);
+        proctor.updateSettings(proctored ? res.proctoring : { ...res.proctoring, audio_detection_enabled: false });
       } catch { /* next poll */ }
     }, SETTINGS_POLL_MS);
     return () => window.clearInterval(t);
@@ -506,7 +506,7 @@ export default function ExamPage() {
   }
 
   const strikesLeft = Math.max(0, ps.maxViolations - ps.violationCount);
-  const needFs = paper.test.proctored && !!settings?.require_fullscreen;
+  const needFs = settings?.require_fullscreen !== false;
   const low = timeLeft <= 300;
   const veryLow = timeLeft <= 60;
   const outcome = outcomes[problem.id] ?? null;
@@ -548,15 +548,17 @@ export default function ExamPage() {
             {saveState === "offline" ? <CloudSlash size={15} /> : <CloudCheck size={15} />}
             {saveState === "saving" ? "Saving" : saveState === "offline" ? "Not saved" : "Saved"}
           </span>
-          {paper.test.proctored ? (
-            <span
-              className={cx("flex items-center gap-1.5 text-xs", ps.violationCount ? "text-bad" : "text-muted")}
-              title={`${strikesLeft} more violation${strikesLeft === 1 ? "" : "s"} hands in your test`}
-            >
-              <ShieldWarning size={15} />
-              <span className="tabular">{ps.violationCount}/{ps.maxViolations}</span>
-            </span>
-          ) : null}
+          <span
+            className={cx(
+              "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ring-1 ring-inset",
+              ps.violationCount >= ps.maxViolations - 1 ? "bg-bad-soft text-bad ring-bad/30"
+                : ps.violationCount > 0 ? "bg-warn-soft text-warn ring-warn/30" : "bg-sunken text-muted ring-line",
+            )}
+            title={`${strikesLeft} more violation${strikesLeft === 1 ? "" : "s"} hands in your test`}
+          >
+            <ShieldWarning size={15} />
+            <span className="tabular">{ps.violationCount}/{ps.maxViolations}</span>
+          </span>
           <span
             className={cx(
               "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-semibold tabular ring-1 ring-inset",
@@ -642,30 +644,55 @@ export default function ExamPage() {
 
       <Dialog
         open={!!critical}
-        title="Violation recorded"
+        title="Test violation detected"
         tone="bad"
         dismissable={false}
+        width="max-w-lg"
         footer={
           <Button variant="primary" onClick={() => {
             setCritical(null);
             if (needFs && !isFullscreen()) void proctor.requestFullscreen();
           }}>
-            Return to the test
+            I understand, continue test
           </Button>
         }
       >
-        <p className="text-ink">{critical?.description}</p>
-        <p className="mt-3">
-          {strikesLeft > 0
-            ? <>You have <span className="font-semibold text-ink">{strikesLeft}</span> more before your test is handed in automatically.</>
-            : "Your test is being handed in."}
-        </p>
+        <p>The following violations have been recorded on this attempt:</p>
+        <ol className="mt-3 grid max-h-64 gap-2 overflow-y-auto">
+          {ps.violations.map((v) => (
+            <li key={v.id} className={cx("flex items-start gap-2.5 rounded-ui border px-3 py-2", v.type === "CRITICAL" ? "border-bad/25 bg-bad-soft" : "border-warn/25 bg-warn-soft")}>
+              <ShieldWarning size={15} className={cx("mt-0.5 shrink-0", v.type === "CRITICAL" ? "text-bad" : "text-warn")} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13px] font-medium text-ink">{v.description}</span>
+                <span className="block text-[11px] text-muted">{new Date(v.timestamp).toLocaleTimeString()}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-4 flex items-baseline justify-between rounded-ui bg-sunken px-3 py-2.5">
+          <span className="text-[13px]"><span className="text-lg font-semibold text-bad tabular">{ps.violationCount}</span> / {ps.maxViolations} violations</span>
+          <span className="text-xs text-muted">{strikesLeft > 0 ? `${strikesLeft} remaining before automatic hand-in` : "Your test is being handed in"}</span>
+        </div>
       </Dialog>
 
       {warning ? (
-        <div role="status" className="fixed left-1/2 top-16 z-[57] w-[min(92vw,440px)] -translate-x-1/2 rounded-ui border border-warn bg-surface px-4 py-3 shadow-[0_12px_32px_rgb(10_10_12/0.18)]">
-          <p className="text-sm font-medium text-warn">Warning recorded</p>
-          <p className="mt-0.5 text-sm text-ink-2">{warning.description}</p>
+        <div role="status" className="fixed left-1/2 top-4 z-[57] w-[min(92vw,400px)] -translate-x-1/2 overflow-hidden rounded-card border border-warn/40 bg-surface shadow-pop">
+          <div className="flex items-center gap-2.5 bg-warn-soft px-4 py-2.5">
+            <ShieldWarning size={16} className="text-warn" />
+            <p className="text-sm font-semibold text-warn">Warning recorded</p>
+          </div>
+          <div className="px-4 py-3">
+            <p className="text-sm text-ink-2">{warning.description}</p>
+            <div className="mt-3 flex items-baseline justify-between">
+              <span className={cx("text-lg font-semibold tabular", ps.violationCount >= ps.maxViolations - 2 ? "text-bad" : "text-warn")}>
+                {ps.violationCount}<span className="text-sm font-normal text-muted"> / {ps.maxViolations}</span>
+              </span>
+              <span className="text-xs text-muted">{strikesLeft > 0 ? `${strikesLeft} remaining` : "Limit reached"}</span>
+            </div>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-sunken">
+              <div className={cx("h-full rounded-full", ps.violationCount >= ps.maxViolations - 2 ? "bg-bad" : "bg-warn")} style={{ width: `${Math.min(100, (ps.violationCount / ps.maxViolations) * 100)}%` }} />
+            </div>
+          </div>
         </div>
       ) : null}
 
