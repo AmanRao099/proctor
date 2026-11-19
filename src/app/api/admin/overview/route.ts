@@ -62,8 +62,35 @@ export const GET = handle(async () => {
       };
     });
 
+  // Hand-ins per day for the last 14 days (server-local calendar days).
+  const days: { date: string; hand_ins: number; average: number }[] = [];
+  const dayStart = new Date(now);
+  dayStart.setHours(0, 0, 0, 0);
+  for (let i = 13; i >= 0; i--) {
+    const from = new Date(dayStart.getTime() - i * 86400_000);
+    const to = new Date(from.getTime() + 86400_000);
+    const inDay = attempts.filter((a) => a.submitted_at && a.submitted_at >= from && a.submitted_at < to);
+    const pcts = inDay.map((a) => {
+      const t = testById.get(String(a.test_id));
+      return t ? scoreOf(a, t).percent : 0;
+    });
+    days.push({
+      date: from.toISOString(),
+      hand_ins: inDay.length,
+      average: pcts.length ? Math.round(pcts.reduce((x, y) => x + y, 0) / pcts.length) : 0,
+    });
+  }
+  const thisWeek = days.slice(7).reduce((x, d) => x + d.hand_ins, 0);
+  const lastWeek = days.slice(0, 7).reduce((x, d) => x + d.hand_ins, 0);
+  const bands = [[0, 39], [40, 59], [60, 79], [80, 100]].map(([low, high]) => ({
+    label: `${low}-${high}%`, low, high, count: percents.filter((p) => p >= low && p <= high).length,
+  }));
+
   return ok({
     server_time: now.toISOString(),
+    daily: days,
+    week: { this_week: thisWeek, last_week: lastWeek },
+    bands,
     stats: {
       candidates,
       active_today: activeToday,

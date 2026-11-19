@@ -15,18 +15,23 @@ import { Trophy } from "@phosphor-icons/react/dist/ssr/Trophy";
 import { Users } from "@phosphor-icons/react/dist/ssr/Users";
 import { X } from "@phosphor-icons/react/dist/ssr/X";
 import { api } from "@/lib/client/api";
+import { useApi } from "@/lib/client/useApi";
+import { Bell } from "@phosphor-icons/react/dist/ssr/Bell";
+import { Plus } from "@phosphor-icons/react/dist/ssr/Plus";
+
+const todayFmt = new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 import type { SessionUser } from "@/lib/shared/types";
 import { Wordmark } from "@/components/TopBar";
 import { Avatar, cx } from "@/components/ui";
 
-type NavItem = { href: string; label: string; icon: typeof Code; exact?: boolean; also?: string };
+type NavItem = { href: string; label: string; icon: typeof Code; exact?: boolean; also?: string; count?: "writing" | "appeals" };
 
 const GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: "Monitor",
     items: [
       { href: "/admin", label: "Overview", icon: SquaresFour, exact: true },
-      { href: "/admin/active", label: "Active Students", icon: Pulse },
+      { href: "/admin/active", label: "Active Students", icon: Pulse, count: "writing" },
       { href: "/admin/leaderboard", label: "Leaderboard", icon: Trophy },
     ],
   },
@@ -35,7 +40,7 @@ const GROUPS: { title: string; items: NavItem[] }[] = [
     items: [
       { href: "/admin/dsa-master", label: "DSA Master", icon: Code, also: "/admin/tests" },
       { href: "/admin/candidates", label: "Students", icon: Users },
-      { href: "/admin/appeals", label: "Ban Appeals", icon: Gavel },
+      { href: "/admin/appeals", label: "Ban Appeals", icon: Gavel, count: "appeals" },
     ],
   },
   {
@@ -47,7 +52,9 @@ const GROUPS: { title: string; items: NavItem[] }[] = [
   },
 ];
 
-function Nav({ onNavigate }: { onNavigate?: () => void }) {
+interface Counts { writing: number; appeals: number }
+
+function Nav({ onNavigate, counts }: { onNavigate?: () => void; counts?: Counts }) {
   const pathname = usePathname();
   return (
     <nav className="grid gap-6">
@@ -73,6 +80,14 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
                 >
                   <Icon size={18} weight={active ? "fill" : "regular"} className={active ? "text-accent" : "text-muted"} />
                   {item.label}
+                  {item.count && counts && counts[item.count] > 0 ? (
+                    <span className={cx(
+                      "ml-auto grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-[11px] font-semibold tabular",
+                      item.count === "appeals" ? "bg-bad text-white" : "bg-accent text-accent-ink",
+                    )}>
+                      {counts[item.count]}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}
@@ -88,6 +103,11 @@ export function AdminShell({ user, children }: { user: SessionUser; children: Re
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [pathname]);
+  // Shared with the Overview page through the useApi cache: one request.
+  const overview = useApi<{ stats: { writing_now: number; pending_appeals: number } }>("/api/admin/overview", { refreshMs: 30_000 });
+  const health = useApi<{ judge0: { ok: boolean; version?: string } }>("/api/admin/health", { refreshMs: 120_000 });
+  const counts = overview.data ? { writing: overview.data.stats.writing_now, appeals: overview.data.stats.pending_appeals } : undefined;
+  const judgeOk = health.data?.judge0.ok;
 
   async function signOut() {
     try { await api.post("/api/auth/logout"); } finally {
@@ -113,7 +133,14 @@ export function AdminShell({ user, children }: { user: SessionUser; children: Re
     <div className="min-h-[100dvh] lg:grid lg:grid-cols-[248px_1fr]">
       <aside className="sticky top-0 hidden h-[100dvh] flex-col gap-7 border-r border-line bg-surface px-3 py-5 lg:flex">
         <Link href="/admin" className="px-3"><Wordmark /></Link>
-        <div className="min-h-0 flex-1 overflow-y-auto"><Nav /></div>
+        <div className="min-h-0 flex-1 overflow-y-auto"><Nav counts={counts} /></div>
+        <div className="rounded-card border border-line bg-raised p-3.5">
+          <p className="flex items-center gap-2 text-[13px] font-medium text-ink">
+            <span className={cx("h-2 w-2 rounded-full", judgeOk === undefined ? "bg-line-strong" : judgeOk ? "bg-ok" : "bg-bad")} />
+            Code runner {judgeOk === undefined ? "checking" : judgeOk ? "online" : "offline"}
+          </p>
+          <p className="mt-0.5 text-xs text-muted">{health.data?.judge0.version ? `Judge0 ${health.data.judge0.version}` : "Judge0"} on EC2</p>
+        </div>
         {footer}
       </aside>
 
@@ -128,15 +155,35 @@ export function AdminShell({ user, children }: { user: SessionUser; children: Re
               <Wordmark />
               <button onClick={() => setOpen(false)} aria-label="Close menu" className="grid h-8 w-8 place-items-center rounded-ui hover:bg-sunken"><X size={16} /></button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto"><Nav onNavigate={() => setOpen(false)} /></div>
+            <div className="min-h-0 flex-1 overflow-y-auto"><Nav counts={counts} onNavigate={() => setOpen(false)} /></div>
             {footer}
           </aside>
         </div>
       ) : null}
 
-      <main className="min-w-0 px-4 pb-24 pt-6 sm:px-8 lg:px-10 lg:pt-9">
-        <div className="mx-auto max-w-[1160px]">{children}</div>
-      </main>
+      <div className="min-w-0">
+        <div className="sticky top-0 z-20 hidden h-16 items-center gap-3 border-b border-line bg-bg/85 px-10 backdrop-blur lg:flex">
+          <p className="text-sm text-muted">{todayFmt.format(new Date())}</p>
+          <div className="ml-auto flex items-center gap-2">
+            {counts && counts.writing > 0 ? (
+              <Link href="/admin/active" className="inline-flex h-9 items-center gap-2 rounded-full border border-accent-line bg-accent-soft px-3 text-[13px] font-medium text-accent">
+                <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full rounded-full bg-accent opacity-60 motion-safe:animate-ping" /><span className="relative inline-flex h-2 w-2 rounded-full bg-accent" /></span>
+                {counts.writing} writing now
+              </Link>
+            ) : null}
+            <Link href="/admin/appeals" title="Pending appeals" aria-label={`Pending appeals: ${counts?.appeals ?? 0}`} className="relative grid h-9 w-9 place-items-center rounded-full border border-line bg-surface text-ink-2 shadow-card hover:text-ink">
+              <Bell size={17} />
+              {counts && counts.appeals > 0 ? <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-bad px-1 text-[10px] font-semibold text-white">{counts.appeals}</span> : null}
+            </Link>
+            <Link href="/admin/tests/new" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-accent px-4 text-[13px] font-medium text-accent-ink shadow-card hover:bg-accent-hover">
+              <Plus size={15} weight="bold" /> New test
+            </Link>
+          </div>
+        </div>
+        <main className="px-4 pb-24 pt-6 sm:px-8 lg:px-10 lg:pt-8">
+          <div className="mx-auto max-w-[1160px]">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }

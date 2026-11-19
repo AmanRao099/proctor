@@ -249,12 +249,26 @@ export function SettingRow({
   );
 }
 
-export function EmptyState({ icon, title, children, action }: { icon?: React.ReactNode; title: string; children?: React.ReactNode; action?: React.ReactNode }) {
+/** A recoloured unDraw illustration from /public/illustrations (decorative). */
+export function Illustration({ name, className }: { name: string; className?: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={`/illustrations/${name}.svg`} alt="" aria-hidden draggable={false} className={cx("pointer-events-none select-none", className)} />;
+}
+
+export function EmptyState({ icon, image, title, children, action }: {
+  icon?: React.ReactNode;
+  /** An illustration name from /public/illustrations. */
+  image?: string;
+  title: string;
+  children?: React.ReactNode;
+  action?: React.ReactNode;
+}) {
   return (
-    <div className="flex flex-col items-center rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center">
-      {icon ? <span className="mb-4 grid h-11 w-11 place-items-center rounded-full bg-accent-soft text-accent">{icon}</span> : null}
-      <p className="font-medium text-ink">{title}</p>
-      {children ? <p className="mt-1 max-w-sm text-sm text-muted">{children}</p> : null}
+    <div className="flex flex-col items-center rounded-card border border-line bg-surface px-6 py-12 text-center shadow-card">
+      {image ? <Illustration name={image} className="mb-6 h-36 w-auto max-w-[240px]" /> : null}
+      {!image && icon ? <span className="mb-4 grid h-11 w-11 place-items-center rounded-full bg-accent-soft text-accent">{icon}</span> : null}
+      <p className="text-[15px] font-semibold text-ink">{title}</p>
+      {children ? <p className="mt-1.5 max-w-sm text-sm text-muted">{children}</p> : null}
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );

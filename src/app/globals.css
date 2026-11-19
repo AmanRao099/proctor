@@ -28,6 +28,8 @@
   --bad: #b03f2a;
   --bad-soft: #fbece8;
   --editor: #ffffff;
+  /* Chart marks: the sage hue, saturated enough to read as a series (validated). */
+  --chart: #22875f;
   --shadow-sm: 0 1px 2px rgb(47 62 70 / 0.06);
   --shadow-md: 0 1px 3px rgb(47 62 70 / 0.07), 0 4px 12px rgb(47 62 70 / 0.06);
   --shadow-lg: 0 12px 32px rgb(47 62 70 / 0.18);
@@ -59,6 +61,7 @@
     --bad: #ec8a75;
     --bad-soft: #3d2420;
     --editor: #1e292e;
+    --chart: #3fa673;
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
     --shadow-md: 0 1px 3px rgb(0 0 0 / 0.35), 0 4px 12px rgb(0 0 0 / 0.25);
     --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.5);
@@ -88,6 +91,7 @@
   --bad: #ec8a75;
   --bad-soft: #3d2420;
   --editor: #1e292e;
+  --chart: #3fa673;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
   --shadow-md: 0 1px 3px rgb(0 0 0 / 0.35), 0 4px 12px rgb(0 0 0 / 0.25);
   --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.5);
@@ -105,6 +109,7 @@
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-accent: var(--accent);
+  --color-chart: var(--chart);
   --color-accent-hover: var(--accent-hover);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
