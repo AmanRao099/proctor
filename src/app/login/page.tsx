@@ -6,6 +6,7 @@ import { ShieldCheck } from "@phosphor-icons/react/dist/ssr/ShieldCheck";
 import { SpeakerSlash } from "@phosphor-icons/react/dist/ssr/SpeakerSlash";
 import { WifiHigh } from "@phosphor-icons/react/dist/ssr/WifiHigh";
 import { Wordmark } from "@/components/TopBar";
+import { Illustration } from "@/components/ui";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -39,12 +40,12 @@ export default function LoginPage() {
           <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-accent/10" />
           <div aria-hidden className="pointer-events-none absolute -bottom-28 -left-16 h-80 w-80 rounded-full bg-accent/[0.07]" />
           <div className="relative max-w-md">
-            <span className="grid h-11 w-11 place-items-center rounded-card bg-surface text-accent shadow-card"><ShieldCheck size={22} weight="fill" /></span>
-            <h2 className="mt-6 text-2xl font-semibold tracking-tight text-ink">Ready for your coding round</h2>
+            <Illustration name="login" className="h-44 w-auto" />
+            <h2 className="mt-8 text-2xl font-semibold tracking-tight text-ink">Ready for your coding round</h2>
             <p className="mt-2 text-sm text-ink-2">The test runs in fullscreen with your camera on. A minute spent on these now saves a lot of stress later.</p>
-            <ul className="mt-8 grid gap-3">
+            <ul className="mt-6 grid gap-2.5">
               {CHECKS.map(({ icon: Icon, title, body }) => (
-                <li key={title} className="flex items-start gap-4 rounded-card bg-surface/85 p-4 shadow-card backdrop-blur">
+                <li key={title} className="flex items-start gap-4 rounded-card bg-surface/85 px-4 py-3 shadow-card backdrop-blur">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent"><Icon size={18} /></span>
                   <span>
                     <span className="block text-sm font-medium text-ink">{title}</span>

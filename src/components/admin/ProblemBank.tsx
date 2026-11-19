@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
 import { Plus } from "@phosphor-icons/react/dist/ssr/Plus";
-import { Badge, Button, Dialog, Input, Notice, Select, Skeleton } from "@/components/ui";
+import { Badge, Button, Dialog, Input, Notice, Select, Skeleton, EmptyState } from "@/components/ui";
 import { api, ApiError } from "@/lib/client/api";
 import { DIFFICULTIES, type AdminProblem } from "@/lib/shared/types";
 import { difficultyTone, useBank, type BankProblem } from "./BankPicker";
@@ -66,10 +66,7 @@ export function ProblemBank() {
       {error ? <Notice tone="bad" title="Could not load the bank">{error}</Notice> : null}
       {list === null && !error ? <div className="grid gap-2"><Skeleton className="h-14" /><Skeleton className="h-14" /></div> : null}
       {list?.length === 0 ? (
-        <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center">
-          <p className="font-medium">The problem bank is empty</p>
-          <p className="mx-auto mt-1 max-w-sm text-sm text-muted">Write problems here with their test cases, then add them to any test from the test editor.</p>
-        </div>
+        <EmptyState image="problems" title="The problem bank is empty">Write problems here with their test cases, then add them to any test from the test editor.</EmptyState>
       ) : null}
 
       {shown.length ? (

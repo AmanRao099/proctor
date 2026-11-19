@@ -15,7 +15,7 @@ import { UserFocus } from "@phosphor-icons/react/dist/ssr/UserFocus";
 import { Warning } from "@phosphor-icons/react/dist/ssr/Warning";
 import { X } from "@phosphor-icons/react/dist/ssr/X";
 import { Wordmark } from "@/components/TopBar";
-import { Button, Notice, Skeleton, cx } from "@/components/ui";
+import { Button, Illustration, Notice, Skeleton, cx } from "@/components/ui";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 import { browserName, isMobileDevice, isSupportedBrowser } from "@/lib/client/device";
 import { useProctor } from "@/lib/proctor/ProctorProvider";
@@ -209,6 +209,7 @@ export default function CheckPage() {
 
         <section className="min-w-0">
           <div className="rounded-card border border-line bg-surface p-6 shadow-card sm:p-6">
+            <Illustration name="camera-check" className="mx-auto mb-5 h-28 w-auto" />
             <h2 className="text-[17px] font-semibold tracking-tight">System check</h2>
             <p className="mt-1 text-[13px] text-muted">Three quick steps, then the paper opens.</p>
             <ol className="mt-6 grid">

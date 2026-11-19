@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { DownloadSimple } from "@phosphor-icons/react/dist/ssr/DownloadSimple";
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
 import { UserPlus } from "@phosphor-icons/react/dist/ssr/UserPlus";
-import { Badge, Button, Person, Dialog, Field, Input, Notice, Skeleton, Textarea, cx } from "@/components/ui";
+import { Badge, Button, Person, Dialog, Field, Input, Notice, Skeleton, Textarea, cx, EmptyState } from "@/components/ui";
 import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 
@@ -122,10 +122,7 @@ export default function CandidatesPage() {
       {list === null && !error ? <div className="grid gap-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}</div> : null}
 
       {list?.length === 0 ? (
-        <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-16 text-center">
-          <p className="font-medium">No candidates yet</p>
-          <p className="mx-auto mt-1 max-w-sm text-sm text-muted">Paste a list of names and emails. Usernames and passwords are generated for you.</p>
-        </div>
+        <EmptyState image="students" title="No students yet">Paste a list of names and emails. Usernames and passwords are generated for you.</EmptyState>
       ) : null}
 
       {shown.length ? (

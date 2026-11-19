@@ -16,7 +16,7 @@ import { PageHeader, Stat, StatGrid } from "@/components/admin/AdminShell";
 import { ProblemBank } from "@/components/admin/ProblemBank";
 import { ResultsBoard } from "@/components/admin/ResultsBoard";
 import { TestsList } from "@/components/admin/TestsList";
-import { Badge, Button, Person, Notice, Select, Skeleton, cx } from "@/components/ui";
+import { Badge, Button, Person, Notice, Select, Skeleton, cx, EmptyState } from "@/components/ui";
 import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 import type { Violation } from "@/lib/shared/types";
@@ -263,7 +263,7 @@ function DSAMaster() {
             Strikes and cooldowns come from the lockout ladder (Settings).
           </p>
           {data.integrity.length === 0 ? (
-            <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-12 text-center text-sm text-muted">No violations recorded in this window.</div>
+            <EmptyState image="all-clear" title="All clear">No violations recorded in this window.</EmptyState>
           ) : data.integrity.map((row) => <IntegrityCard key={row.user_id} row={row} />)}
         </div>
       ) : null}

@@ -6,7 +6,7 @@ import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass"
 import { Trophy } from "@phosphor-icons/react/dist/ssr/Trophy";
 import { PageHeader } from "@/components/admin/AdminShell";
 import { ResultsBoard, downloadText } from "@/components/admin/ResultsBoard";
-import { Button, Input, Person, Notice, Select, Skeleton, cx } from "@/components/ui";
+import { Button, Input, Person, Notice, Select, Skeleton, cx, EmptyState } from "@/components/ui";
 import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 
@@ -67,10 +67,7 @@ export default function LeaderboardPage() {
             <Button size="sm" className="ml-auto" onClick={exportCsv} disabled={!data.rows.length}><DownloadSimple size={14} /> CSV</Button>
           </div>
           {data.rows.length === 0 ? (
-            <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center">
-              <p className="font-medium">No rankings yet</p>
-              <p className="mt-1 text-sm text-muted">The board fills in as students sit tests.</p>
-            </div>
+            <EmptyState image="leaderboard" title="No rankings yet">The board fills in as students sit tests.</EmptyState>
           ) : (
             <>
               <div className="grid gap-3 sm:grid-cols-3">

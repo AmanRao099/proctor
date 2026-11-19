@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/admin/AdminShell";
-import { Badge, Button, Person, Notice, Select, Skeleton, Textarea } from "@/components/ui";
+import { Badge, Button, Person, Notice, Select, Skeleton, Textarea, EmptyState } from "@/components/ui";
 import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 
@@ -100,10 +100,7 @@ export default function AppealsPage() {
       {error ? <Notice tone="bad" title="Could not load">{error}</Notice> : null}
       {list === null && !error ? <Skeleton className="h-40" /> : null}
       {list?.length === 0 ? (
-        <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center">
-          <p className="font-medium">No {status === "all" ? "" : status} appeals</p>
-          <p className="mt-1 text-sm text-muted">A barred student can appeal from their dashboard.</p>
-        </div>
+        <EmptyState image="all-clear" title={`No ${status === "all" ? "" : status + " "}appeals`}>A barred student can appeal from their dashboard.</EmptyState>
       ) : null}
       <div className="grid gap-4">{list?.map((a) => <AppealCard key={a.id} a={a} onDone={load} />)}</div>
     </div>

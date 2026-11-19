@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Plus } from "@phosphor-icons/react/dist/ssr/Plus";
-import { Badge, Button, Notice, Skeleton } from "@/components/ui";
+import { Badge, Button, Notice, Skeleton, EmptyState } from "@/components/ui";
 import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 import type { TestWindow } from "@/lib/shared/types";
@@ -44,11 +44,9 @@ export function TestsList() {
       ) : null}
 
       {rows?.length === 0 ? (
-        <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-16 text-center">
-          <p className="font-medium">No tests yet</p>
-          <p className="mx-auto mt-1 max-w-sm text-sm text-muted">Create a test, add problems with test cases, assign candidates, then publish it.</p>
-          <Link href="/admin/tests/new" className="mt-6 inline-block"><Button variant="primary"><Plus size={16} /> New test</Button></Link>
-        </div>
+        <EmptyState image="no-tests" title="No tests yet" action={<Link href="/admin/tests/new"><Button variant="primary"><Plus size={16} /> New test</Button></Link>}>
+          Create a test, add problems with test cases, assign students, then publish it.
+        </EmptyState>
       ) : null}
 
       {rows?.length ? (

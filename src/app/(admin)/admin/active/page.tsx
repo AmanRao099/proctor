@@ -10,7 +10,7 @@ import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass"
 import { ShieldWarning } from "@phosphor-icons/react/dist/ssr/ShieldWarning";
 import { WifiSlash } from "@phosphor-icons/react/dist/ssr/WifiSlash";
 import { PageHeader, Stat, StatGrid } from "@/components/admin/AdminShell";
-import { Avatar, Input, Notice, Person, Select, Skeleton, cx } from "@/components/ui";
+import { Avatar, Input, Notice, Person, Select, Skeleton, cx, EmptyState } from "@/components/ui";
 import { useApi } from "@/lib/client/useApi";
 import { api, ApiError, formatDuration } from "@/lib/client/api";
 import type { Violation } from "@/lib/shared/types";
@@ -96,10 +96,7 @@ export default function ActivePage() {
           </div>
 
           {all.length === 0 ? (
-            <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center">
-              <p className="font-medium">Nobody is writing a test right now</p>
-              <p className="mt-1 text-sm text-muted">Students appear here the moment they open a paper.</p>
-            </div>
+            <EmptyState image="nobody-writing" title="Nobody is writing a test right now">Students appear here the moment they open a paper.</EmptyState>
           ) : (
             <div className="overflow-x-auto rounded-card border border-line bg-surface shadow-card">
               <table className="data-table min-w-[900px]">

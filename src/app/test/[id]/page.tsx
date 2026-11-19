@@ -15,7 +15,7 @@ import { UploadSimple } from "@phosphor-icons/react/dist/ssr/UploadSimple";
 import { CodeEditor } from "@/components/exam/CodeEditor";
 import { ResultPanel, type Outcome } from "@/components/exam/ResultPanel";
 import { Statement } from "@/components/exam/Statement";
-import { Badge, Button, Dialog, Notice, Select, Skeleton, cx } from "@/components/ui";
+import { Badge, Button, Dialog, Illustration, Notice, Select, Skeleton, cx } from "@/components/ui";
 import { api, ApiError, formatDuration } from "@/lib/client/api";
 import { isMobileDevice } from "@/lib/client/device";
 import { useProctor } from "@/lib/proctor/ProctorProvider";
@@ -422,9 +422,12 @@ export default function ExamPage() {
   if (fatal) {
     return (
       <Centered>
+        <div className="grid w-full max-w-lg justify-items-center gap-6">
+        <Illustration name="no-signal" className="h-36 w-auto" />
         <Notice tone="bad" title="This test cannot continue" action={<Link href="/dashboard"><Button size="sm">Back to tests</Button></Link>}>
           {fatal}
         </Notice>
+        </div>
       </Centered>
     );
   }
@@ -454,8 +457,8 @@ export default function ExamPage() {
             </Notice>
           ) : (
             <div>
-              <CheckCircle size={32} weight="fill" className="text-ok" />
-              <h1 className="mt-4 text-2xl font-semibold tracking-tight">Test handed in</h1>
+              <Illustration name="handed-in" className="h-40 w-auto" />
+              <h1 className="mt-6 text-2xl font-semibold tracking-tight">Test handed in</h1>
               <p className="mt-1 text-sm text-muted">
                 {ps.autoSubmitted
                   ? `It was handed in automatically after ${ps.violationCount} recorded violations.`

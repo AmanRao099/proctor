@@ -13,7 +13,8 @@ import { SpeakerSlash } from "@phosphor-icons/react/dist/ssr/SpeakerSlash";
 import { Trophy } from "@phosphor-icons/react/dist/ssr/Trophy";
 import { VideoCamera } from "@phosphor-icons/react/dist/ssr/VideoCamera";
 import { WifiHigh } from "@phosphor-icons/react/dist/ssr/WifiHigh";
-import { Badge, Button, Card, Dialog, EmptyState, Notice, Skeleton, Textarea, cx } from "@/components/ui";
+import { AreaChart } from "@/components/charts/Charts";
+import { Badge, Button, Card, Dialog, EmptyState, Illustration, Notice, Skeleton, Textarea, cx } from "@/components/ui";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 import type { AttemptState, SessionUser, TestWindow } from "@/lib/shared/types";
 
@@ -118,18 +119,49 @@ export default function DashboardPage() {
   const upcoming = tests?.filter((t) => !t.can_start && t.window === "upcoming") ?? [];
   const past = tests?.filter((t) => !t.can_start && t.window !== "upcoming") ?? [];
   const firstName = user?.name.split(/\s+/)[0];
+  const scored = (tests ?? []).filter((t) => t.score).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const avg = scored.length ? Math.round(scored.reduce((x, t) => x + t.score!.percent, 0) / scored.length) : null;
+  const bestPct = scored.length ? Math.max(...scored.map((t) => t.score!.percent)) : null;
+  const solved = scored.reduce((x, t) => x + t.score!.solved, 0);
+  const taken = (tests ?? []).filter((t) => t.state === "submitted" || t.state === "timed_out").length;
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex min-w-0 flex-col gap-8">
-        <div>
-          <h1 className="text-[26px] font-semibold tracking-tight">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
-          <p className="mt-1.5 text-sm text-muted">
-            {tests === null ? "Loading your tests." : live.length
-              ? `You have ${live.length} test${live.length === 1 ? "" : "s"} open right now.`
-              : "No test is open right now. This page refreshes on its own."}
-          </p>
-        </div>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-accent-soft via-surface to-surface">
+          <div className="grid items-center gap-6 p-6 sm:p-8 md:grid-cols-[1fr_auto]">
+            <div className="min-w-0">
+              <h1 className="text-[28px] font-semibold leading-tight tracking-tight">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
+              <p className="mt-2 max-w-md text-sm text-ink-2">
+                {tests === null ? "Loading your tests." : live.length
+                  ? `You have ${live.length} test${live.length === 1 ? "" : "s"} open right now. Take a breath, check your setup, and start when you are ready.`
+                  : "No test is open right now. This page refreshes on its own."}
+              </p>
+              {live[0] ? (
+                <Link href={`/test/${live[0].id}/check`} className="mt-5 inline-block">
+                  <Button variant="primary">{live[0].state === "in_progress" ? "Resume" : "Start"} {live[0].title} <ArrowRight size={16} /></Button>
+                </Link>
+              ) : null}
+            </div>
+            <Illustration name="student-hero" className="hidden h-36 w-auto md:block" />
+          </div>
+        </Card>
+
+        {tests && tests.length ? (
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {[
+              { label: "Tests completed", value: taken },
+              { label: "Average score", value: avg === null ? "-" : `${avg}%` },
+              { label: "Best score", value: bestPct === null ? "-" : `${bestPct}%` },
+              { label: "Problems solved", value: solved },
+            ].map((k) => (
+              <Card key={k.label} className="p-4">
+                <p className="text-xs font-medium text-muted">{k.label}</p>
+                <p className="mt-2 text-2xl font-semibold tracking-tight tabular">{k.value}</p>
+              </Card>
+            ))}
+          </div>
+        ) : null}
 
         {error ? <Notice tone="bad" title="Something went wrong">{error}</Notice> : null}
         {lock && !lock.allowed ? (
@@ -145,7 +177,7 @@ export default function DashboardPage() {
         {tests === null && !error ? <div className="grid gap-3"><Skeleton className="h-36" /><Skeleton className="h-20" /></div> : null}
 
         {tests && tests.length === 0 ? (
-          <EmptyState icon={<CalendarBlank size={20} />} title="No tests assigned yet">
+          <EmptyState image="no-tests" title="No tests assigned yet">
             When your organiser assigns you a test it appears here.
           </EmptyState>
         ) : null}
@@ -206,6 +238,22 @@ export default function DashboardPage() {
           </section>
         ) : null}
 
+        {scored.length >= 2 ? (
+          <Card className="p-5 sm:p-6">
+            <h2 className="text-[15px] font-semibold">Your scores</h2>
+            <p className="text-xs text-muted">Percentage of marks in each test, oldest first</p>
+            <div className="mt-4">
+              <AreaChart
+                caption="Your score in each completed test"
+                height={180}
+                max={100}
+                unit="%"
+                data={scored.map((t) => ({ label: formatWhen(t.starts_at).split(",")[0], value: t.score!.percent, detail: t.title }))}
+              />
+            </div>
+          </Card>
+        ) : null}
+
         {past.length ? (
           <section>
             <h2 className="mb-3 text-[15px] font-semibold">Past tests</h2>
@@ -241,7 +289,7 @@ export default function DashboardPage() {
         ) : null}
       </div>
 
-      <aside className="lg:pt-[72px]">
+      <aside>
         <Card className="p-5">
           <h2 className="text-[15px] font-semibold">Before you start</h2>
           <p className="mt-1 text-[13px] text-muted">Check these now, not five minutes in.</p>
