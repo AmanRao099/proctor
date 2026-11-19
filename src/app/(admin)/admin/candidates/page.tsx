@@ -96,10 +96,10 @@ export default function CandidatesPage() {
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Candidates</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Students</h1>
           <p className="mt-1 text-sm text-muted">Accounts that can sign in and take tests assigned to them.</p>
         </div>
-        <Button variant="primary" onClick={() => setAddOpen(true)}><UserPlus size={16} /> Add candidates</Button>
+        <Button variant="primary" onClick={() => setAddOpen(true)}><UserPlus size={16} /> Add students</Button>
       </div>
 
       {created ? (

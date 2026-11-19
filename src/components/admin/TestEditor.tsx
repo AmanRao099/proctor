@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Plus } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft, Books, Plus } from "@phosphor-icons/react/dist/ssr";
 import { Badge, Button, Dialog, Field, Input, Notice, Skeleton, Textarea, Toggle } from "@/components/ui";
 import { api, ApiError } from "@/lib/client/api";
 import { DEFAULT_PROCTORING, type ProctoringSettings } from "@/lib/shared/proctoring";
 import type { AdminProblem, AdminTest } from "@/lib/shared/types";
+import { BankPicker } from "./BankPicker";
 import { CandidatePicker } from "./CandidatePicker";
 import { ProblemEditor, blankProblem } from "./ProblemEditor";
 import { ProctoringForm } from "./ProctoringForm";
@@ -38,6 +39,7 @@ type Draft = {
   show_results: boolean;
   proctoring: ProctoringSettings;
   problems: AdminProblem[];
+  followup: { prompt: string; answer: string };
   assign_all: boolean;
   candidate_ids: string[];
 };
@@ -59,15 +61,20 @@ export function TestEditor({ testId }: { testId?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [bankOpen, setBankOpen] = useState(false);
 
   useEffect(() => {
     if (!testId) {
       const w = defaultWindow();
-      setDraft({
+      const fresh = (proctoring: ProctoringSettings) => setDraft({
         title: "", instructions: "", duration_minutes: 90, starts: w.starts, ends: w.ends,
-        proctored: true, show_results: true, proctoring: DEFAULT_PROCTORING,
-        problems: [blankProblem(1)], assign_all: false, candidate_ids: [],
+        proctored: true, show_results: true, proctoring,
+        problems: [], followup: { prompt: "", answer: "" }, assign_all: false, candidate_ids: [],
       });
+      // New tests start from the platform's default proctoring (Settings).
+      api.get<{ settings: { default_proctoring: ProctoringSettings } }>("/api/admin/settings")
+        .then((r) => fresh(r.settings.default_proctoring))
+        .catch(() => fresh(DEFAULT_PROCTORING));
       return;
     }
     api.get<{ test: AdminTest; attempts: number }>(`/api/admin/tests/${testId}`)
@@ -78,7 +85,8 @@ export function TestEditor({ testId }: { testId?: string }) {
           title: test.title, instructions: test.instructions, duration_minutes: test.duration_minutes,
           starts: toLocalInput(test.starts_at), ends: toLocalInput(test.ends_at),
           proctored: test.proctored, show_results: test.show_results, proctoring: test.proctoring,
-          problems: test.problems, assign_all: test.assign_all, candidate_ids: test.candidate_ids,
+          problems: test.problems, followup: test.followup ?? { prompt: "", answer: "" },
+          assign_all: test.assign_all, candidate_ids: test.candidate_ids,
         });
       })
       .catch((e) => setLoadError(e instanceof ApiError ? e.message : "Could not load this test."));
@@ -106,6 +114,7 @@ export function TestEditor({ testId }: { testId?: string }) {
       show_results: draft.show_results,
       proctoring: draft.proctoring,
       problems: draft.problems.map((p) => ({ ...p, id: p.id || undefined, cases: p.cases.map((c) => ({ ...c, id: c.id || undefined })) })),
+      followup: draft.followup.prompt.trim() && draft.followup.answer.trim() ? draft.followup : null,
       assign_all: draft.assign_all,
       candidate_ids: draft.candidate_ids,
     };
@@ -131,7 +140,7 @@ export function TestEditor({ testId }: { testId?: string }) {
     if (!testId) return;
     try {
       await api.del(`/api/admin/tests/${testId}`);
-      router.replace("/admin");
+      router.replace("/admin/dsa-master?view=schedule");
     } catch (e) {
       setConfirmDelete(false);
       setError(e instanceof ApiError ? e.message : "Could not delete.");
@@ -142,7 +151,7 @@ export function TestEditor({ testId }: { testId?: string }) {
     <div className="grid gap-8 lg:grid-cols-[180px_1fr]">
       <aside className="hidden lg:block">
         <div className="sticky top-24 grid gap-1">
-          <Link href="/admin" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"><ArrowLeft size={14} /> All tests</Link>
+          <Link href="/admin/dsa-master?view=schedule" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"><ArrowLeft size={14} /> All tests</Link>
           {SECTIONS.map((s) => (
             <a key={s.id} href={`#${s.id}`} className="rounded-ui px-2.5 py-1.5 text-sm text-muted hover:bg-sunken hover:text-ink">{s.label}</a>
           ))}
@@ -180,6 +189,14 @@ export function TestEditor({ testId }: { testId?: string }) {
               </Field>
             </div>
             <Toggle checked={draft.show_results} onChange={(v) => set("show_results", v)} label="Show scores to candidates" description="Off: candidates see only that a submission was recorded." />
+            <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
+              <Field label="Follow-up question (optional)" hint="Asked in the hand-in dialog; answering it enables Hand in. Stored beside the score, never added to it.">
+                {(id) => <Input id={id} value={draft.followup.prompt} onChange={(e) => set("followup", { ...draft.followup, prompt: e.target.value })} placeholder="What is the output of problem 2 for input 7?" maxLength={300} />}
+              </Field>
+              <Field label="Expected answer">
+                {(id) => <Input id={id} value={draft.followup.answer} onChange={(e) => set("followup", { ...draft.followup, answer: e.target.value })} placeholder="42" maxLength={100} />}
+              </Field>
+            </div>
           </div>
         </section>
 
@@ -205,9 +222,24 @@ export function TestEditor({ testId }: { testId?: string }) {
               />
             ))}
           </div>
-          <Button className="mt-3" onClick={() => set("problems", [...draft.problems, blankProblem(draft.problems.length + 1)])}>
-            <Plus size={16} /> Add problem
-          </Button>
+          {draft.problems.length === 0 ? (
+            <p className="rounded-ui border border-dashed border-line-strong px-4 py-8 text-center text-sm text-muted">No problems yet. Add from the problem bank, or write one here.</p>
+          ) : null}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button variant="primary" onClick={() => setBankOpen(true)}><Books size={16} /> Add from bank</Button>
+            <Button onClick={() => set("problems", [...draft.problems, blankProblem(draft.problems.length + 1)])}>
+              <Plus size={16} /> Write a new problem
+            </Button>
+          </div>
+          <BankPicker
+            open={bankOpen}
+            onClose={() => setBankOpen(false)}
+            exclude={draft.problems.map((p) => p.source_id).filter((x): x is string => !!x)}
+            onAdd={(picked) => {
+              set("problems", [...draft.problems, ...picked.map((p) => ({ ...p, id: "", source_id: p.id, cases: p.cases.map((c) => ({ ...c, id: "" })) }))]);
+              setBankOpen(false);
+            }}
+          />
         </section>
 
         <section id="candidates" className="scroll-mt-24 border-t border-line pt-8 mt-10">

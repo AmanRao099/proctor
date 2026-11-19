@@ -28,6 +28,8 @@ interface Brief {
   window: TestWindow;
   state: AttemptState;
   can_start: boolean;
+  lockout_message: string;
+  followup_prompt: string;
 }
 
 type StepState = "todo" | "active" | "done" | "failed";
@@ -252,7 +254,8 @@ export default function CheckPage() {
               {brief && !brief.can_start ? (
                 <p className="mt-4 flex items-center gap-2 text-sm text-warn">
                   <Warning size={16} />
-                  {brief.state === "submitted" ? "You have already handed in this test."
+                  {brief.lockout_message ? brief.lockout_message
+                    : brief.state === "submitted" ? "You have already handed in this test."
                     : brief.state === "timed_out" ? "Your time for this test is over."
                       : brief.window === "upcoming" ? `This test opens ${formatWhen(brief.starts_at)}.`
                         : "This test has closed."}

@@ -21,11 +21,31 @@ export interface ProblemDoc {
   output_format: string;
   constraints: string;
   marks: number;
+  /** Easy | Medium | Hard. Performance groups are built on this and on topics. */
+  difficulty: string;
+  topics: string[];
   cpu_time_limit: number;
   memory_limit_kb: number;
   languages: Language[];
   starter: Partial<Record<Language, string>>;
   cases: CaseDoc[];
+  /** The bank problem this was copied from, when it was. */
+  source_id?: string;
+}
+
+/** The optional one-line question a candidate answers to hand in (MyCodeBud's follow-up). */
+export interface FollowupDoc {
+  prompt: string;
+  answer: string;
+}
+
+export interface Presence {
+  at: Date;
+  current_index: number;
+  camera_live: boolean;
+  fullscreen: boolean;
+  focused: boolean;
+  face_status: string;
 }
 
 export interface TestDoc {
@@ -40,6 +60,7 @@ export interface TestDoc {
   show_results: boolean;
   proctoring: ProctoringSettings;
   problems: ProblemDoc[];
+  followup: FollowupDoc | null;
   assign_all: boolean;
   candidate_ids: ObjectId[];
   created_by: ObjectId;
@@ -70,7 +91,19 @@ export interface AttemptDoc {
   submitted_due_to_violation: boolean;
   last_judge_at: Date | null;
   final?: { marks_obtained: number; total_marks: number; percent: number; solved: number; count: number };
+  followup?: { answer: string; correct: boolean } | null;
+  presence?: Presence;
+  last_improved_at?: Date | null;
   user_agent?: string;
+}
+
+/** Numbers compare as numbers (57 == 57.0), anything else case-blind. */
+export function followupCorrect(given: string, expected: string) {
+  const g = given.split(/\s+/).join(" ").trim().toLowerCase();
+  const e = expected.split(/\s+/).join(" ").trim().toLowerCase();
+  const gn = Number(g), en = Number(e);
+  if (g !== "" && e !== "" && Number.isFinite(gn) && Number.isFinite(en)) return gn === en;
+  return g === e;
 }
 
 /** Hand-ins are accepted this long past the deadline (a slow network at 00:00). */
@@ -141,7 +174,8 @@ export function toAdminTest(t: TestDoc): AdminTest {
     proctored: t.proctored,
     show_results: t.show_results,
     proctoring: normalizeProctoring(t.proctoring),
-    problems: t.problems,
+    problems: t.problems.map((p) => ({ ...p, difficulty: p.difficulty || "Medium", topics: p.topics || [] })),
+    followup: t.followup ?? null,
     assign_all: t.assign_all,
     candidate_ids: (t.candidate_ids || []).map(String),
     created_at: t.created_at.toISOString(),

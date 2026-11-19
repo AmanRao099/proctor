@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, Clock, Code, VideoCamera } from "@phosphor-icons/react/dist/ssr";
-import { Badge, Button, Notice, Skeleton } from "@/components/ui";
+import { Badge, Button, Dialog, Notice, Skeleton, Textarea } from "@/components/ui";
 import { api, ApiError, formatWhen } from "@/lib/client/api";
 import type { AttemptState, TestWindow } from "@/lib/shared/types";
 
@@ -35,10 +35,18 @@ export default function DashboardPage() {
   const [tests, setTests] = useState<MyTest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [skew, setSkew] = useState(0);
+  const [lock, setLock] = useState<{ banned: boolean; can_appeal: boolean; appeal_status: string | null; allowed: boolean } | null>(null);
+  const [lockMsg, setLockMsg] = useState("");
+  const [appealOpen, setAppealOpen] = useState(false);
+  const [appealText, setAppealText] = useState("");
+  const [appealBusy, setAppealBusy] = useState(false);
+  const [appealError, setAppealError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get<{ tests: MyTest[]; server_time: string }>("/api/tests");
+      const res = await api.get<{ tests: MyTest[]; server_time: string; lockout: { banned: boolean; can_appeal: boolean; appeal_status: string | null; allowed: boolean }; lockout_message: string }>("/api/tests");
+      setLock(res.lockout);
+      setLockMsg(res.lockout_message);
       setSkew(new Date(res.server_time).getTime() - Date.now());
       setTests(res.tests);
       setError(null);
@@ -65,6 +73,43 @@ export default function DashboardPage() {
       </div>
 
       {error ? <Notice tone="bad" title="Something went wrong">{error}</Notice> : null}
+      {lock && !lock.allowed ? (
+        <Notice
+          tone={lock.banned ? "bad" : "warn"}
+          title={lock.banned ? "Proctored tests are locked" : "Cooldown in effect"}
+          action={lock.can_appeal ? <Button size="sm" variant="primary" onClick={() => setAppealOpen(true)}>Appeal</Button> : null}
+        >
+          {lockMsg}
+        </Notice>
+      ) : null}
+      <Dialog
+        open={appealOpen}
+        onClose={() => setAppealOpen(false)}
+        title="Appeal to the organiser"
+        footer={
+          <>
+            <Button onClick={() => setAppealOpen(false)}>Cancel</Button>
+            <Button variant="primary" busy={appealBusy} disabled={appealText.trim().length < 20} onClick={async () => {
+              setAppealBusy(true);
+              setAppealError(null);
+              try {
+                await api.post("/api/proctor/appeal", { message: appealText });
+                setAppealOpen(false);
+                setAppealText("");
+                void load();
+              } catch (err) {
+                setAppealError(err instanceof ApiError ? err.message : "Could not send your appeal.");
+              } finally {
+                setAppealBusy(false);
+              }
+            }}>Send appeal</Button>
+          </>
+        }
+      >
+        <p>Explain what happened during the tests that were handed in. An organiser reviews your appeal alongside the proctor&apos;s record.</p>
+        <Textarea value={appealText} onChange={(e) => setAppealText(e.target.value)} className="mt-3 min-h-32" aria-label="Appeal message" />
+        {appealError ? <p className="mt-2 text-sm text-bad">{appealError}</p> : null}
+      </Dialog>
 
       {tests === null && !error ? (
         <div className="grid gap-3">

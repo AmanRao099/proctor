@@ -25,6 +25,9 @@ const problemSchema = z.object({
   output_format: text(10_000),
   constraints: text(10_000),
   marks: z.number().min(0).max(1000).default(10),
+  difficulty: z.enum(["Easy", "Medium", "Hard"]).default("Medium"),
+  topics: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
+  source_id: z.string().max(40).optional(),
   cpu_time_limit: z.number().min(0.5).max(15).default(2),
   memory_limit_kb: z.number().int().min(16_000).max(512_000).default(256_000),
   languages: z.array(lang).min(1, "Allow at least one language").default(LANGUAGE_KEYS),
@@ -43,13 +46,24 @@ export const testSchema = z.object({
   show_results: z.boolean().default(true),
   proctoring: z.unknown().optional(),
   problems: z.array(problemSchema).max(30).default([]),
+  followup: z.object({ prompt: z.string().max(300), answer: z.string().max(100) }).nullable().optional(),
   assign_all: z.boolean().default(false),
   candidate_ids: z.array(z.string()).max(20_000).default([]),
 });
 
 export type TestInput = z.infer<typeof testSchema>;
 
-const newId = () => randomBytes(6).toString("hex");
+export const newId = () => randomBytes(6).toString("hex");
+
+/** Both parts or no question at all, whitespace collapsed (as MyCodeBud). */
+function cleanFollowup(raw: { prompt: string; answer: string } | null | undefined) {
+  if (!raw) return null;
+  const prompt = raw.prompt.split(/\s+/).join(" ").trim();
+  const answer = raw.answer.split(/\s+/).join(" ").trim();
+  return prompt && answer ? { prompt, answer } : null;
+}
+
+export { problemSchema };
 
 /** Validate cross-field rules and shape the document fields to store. */
 export function toTestFields(input: TestInput): Omit<TestDoc, "_id" | "created_by" | "created_at" | "updated_at"> {
@@ -92,6 +106,7 @@ export function toTestFields(input: TestInput): Omit<TestDoc, "_id" | "created_b
     show_results: input.show_results,
     proctoring: normalizeProctoring(input.proctoring),
     problems,
+    followup: cleanFollowup(input.followup),
     assign_all: input.assign_all,
     candidate_ids: candidateIds,
   };

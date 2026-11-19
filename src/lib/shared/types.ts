@@ -99,6 +99,8 @@ export interface PaperResponse {
     started_at: string;
     expires_at: string;
     remaining_seconds: number;
+    /** The follow-up question answered in the hand-in dialog; "" when none. */
+    followup_prompt: string;
   };
   proctoring: ProctoringSettings;
   problems: PaperProblem[];
@@ -112,6 +114,8 @@ export interface PaperResponse {
   server_time: string;
 }
 
+export const DIFFICULTIES = ["Easy", "Medium", "Hard"] as const;
+
 export interface AdminProblem {
   id: string;
   title: string;
@@ -120,6 +124,9 @@ export interface AdminProblem {
   output_format: string;
   constraints: string;
   marks: number;
+  difficulty: string;
+  topics: string[];
+  source_id?: string;
   cpu_time_limit: number;
   memory_limit_kb: number;
   languages: Language[];
@@ -139,6 +146,7 @@ export interface AdminTest {
   show_results: boolean;
   proctoring: ProctoringSettings;
   problems: AdminProblem[];
+  followup: { prompt: string; answer: string } | null;
   assign_all: boolean;
   candidate_ids: string[];
   created_at: string;

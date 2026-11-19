@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { CaretDown, CaretRight, Copy, Eye, EyeSlash, Plus, Trash } from "@phosphor-icons/react/dist/ssr";
-import { Button, Field, Input, Textarea, cx } from "@/components/ui";
+import { Button, Field, Input, Select, Textarea, cx } from "@/components/ui";
 import { LANGUAGES, LANGUAGE_KEYS, type Language } from "@/lib/shared/languages";
-import type { AdminProblem } from "@/lib/shared/types";
+import { DIFFICULTIES, type AdminProblem } from "@/lib/shared/types";
 
 export function blankProblem(n: number): AdminProblem {
   return {
@@ -15,6 +15,8 @@ export function blankProblem(n: number): AdminProblem {
     output_format: "",
     constraints: "",
     marks: 10,
+    difficulty: "Medium",
+    topics: [],
     cpu_time_limit: 2,
     memory_limit_kb: 256_000,
     languages: [...LANGUAGE_KEYS],
@@ -26,14 +28,16 @@ export function blankProblem(n: number): AdminProblem {
 const mono = "font-mono text-[12.5px]";
 
 export function ProblemEditor({
-  problem, index, onChange, onRemove, onDuplicate, defaultOpen,
+  problem, index, onChange, onRemove, onDuplicate, defaultOpen, actions,
 }: {
   problem: AdminProblem;
   index: number;
   onChange: (p: AdminProblem) => void;
   onRemove: () => void;
-  onDuplicate: () => void;
+  onDuplicate?: () => void;
   defaultOpen?: boolean;
+  /** Extra controls in the header row, e.g. Save for a bank problem. */
+  actions?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(!!defaultOpen);
   const set = <K extends keyof AdminProblem>(k: K, v: AdminProblem[K]) => onChange({ ...problem, [k]: v });
@@ -56,10 +60,11 @@ export function ProblemEditor({
           <span className="font-mono text-xs text-muted">{index + 1}</span>
           <span className="truncate font-medium">{problem.title || "Untitled problem"}</span>
           <span className="ml-auto hidden shrink-0 font-mono text-xs text-muted sm:inline">
-            {problem.marks} marks | {visible} sample, {hidden} hidden
+            {problem.difficulty || "Medium"} | {problem.marks} marks | {visible} sample, {hidden} hidden
           </span>
         </button>
-        <Button size="sm" variant="ghost" onClick={onDuplicate} aria-label="Duplicate problem" title="Duplicate"><Copy size={14} /></Button>
+        {actions}
+        {onDuplicate ? <Button size="sm" variant="ghost" onClick={onDuplicate} aria-label="Duplicate problem" title="Duplicate"><Copy size={14} /></Button> : null}
         <Button size="sm" variant="ghost" onClick={onRemove} aria-label="Remove problem" title="Remove"><Trash size={14} /></Button>
       </div>
 
@@ -70,6 +75,26 @@ export function ProblemEditor({
             <Field label="Marks">{(id) => <Input id={id} type="number" min={0} value={problem.marks} onChange={(e) => set("marks", Number(e.target.value))} />}</Field>
             <Field label="CPU limit (s)">{(id) => <Input id={id} type="number" min={0.5} max={15} step={0.5} value={problem.cpu_time_limit} onChange={(e) => set("cpu_time_limit", Number(e.target.value))} />}</Field>
             <Field label="Memory (MB)">{(id) => <Input id={id} type="number" min={16} max={512} value={Math.round(problem.memory_limit_kb / 1000)} onChange={(e) => set("memory_limit_kb", Number(e.target.value) * 1000)} />}</Field>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
+            <Field label="Difficulty">
+              {(id) => (
+                <Select id={id} value={problem.difficulty || "Medium"} onChange={(e) => set("difficulty", e.target.value)}>
+                  {DIFFICULTIES.map((x) => <option key={x} value={x}>{x}</option>)}
+                </Select>
+              )}
+            </Field>
+            <Field label="Topics" hint="Comma separated. Performance groups are built on difficulty and topics.">
+              {(id) => (
+                <Input
+                  id={id}
+                  defaultValue={(problem.topics || []).join(", ")}
+                  onBlur={(e) => set("topics", Array.from(new Set(e.target.value.split(",").map((t) => t.trim()).filter(Boolean))).slice(0, 12))}
+                  placeholder="Arrays, Hashing"
+                />
+              )}
+            </Field>
           </div>
 
           <Field label="Statement" hint="Plain text. Blank lines start a new paragraph; wrap code in `backticks`.">

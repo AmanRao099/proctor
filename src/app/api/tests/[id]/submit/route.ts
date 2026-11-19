@@ -54,6 +54,7 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
         [`code.${problem.id}.${input.language}`]: input.code,
         [`language.${problem.id}`]: input.language,
         ...(improves ? {
+          last_improved_at: now,
           [`best.${problem.id}`]: {
             marks_obtained: result.marks_obtained,
             passed: result.passed,

@@ -27,6 +27,8 @@ const problems = [
     output_format: "Print one integer: the number of pairs.",
     constraints: "1 <= n <= 2 * 10^5\n-10^9 <= a[i], k <= 10^9",
     marks: 20,
+    difficulty: "Easy",
+    topics: ["Arrays", "Hashing"],
     cpu_time_limit: 2,
     memory_limit_kb: 256000,
     languages: ALL,
@@ -47,6 +49,8 @@ const problems = [
     output_format: "Print `t` lines, each `YES` or `NO`.",
     constraints: "1 <= t <= 1000\n1 <= length <= 10^4",
     marks: 30,
+    difficulty: "Medium",
+    topics: ["Stacks", "Strings"],
     cpu_time_limit: 2,
     memory_limit_kb: 256000,
     languages: ALL,
@@ -99,12 +103,15 @@ async function main() {
         block_right_click: true, block_dev_tools: true, require_fullscreen: true,
       },
       problems,
+      followup: { prompt: "How many pairs does problem 1 report for the first example?", answer: "3" },
       assign_all: false,
       candidate_ids: ids,
       created_by: admin?._id ?? null,
       created_at: new Date(),
       updated_at: new Date(),
     });
+    // The same problems in the bank, for DSA Master > Problems.
+    await d.collection("problems").insertMany(problems.map(({ id: _id, ...p }) => ({ ...p, created_at: new Date(), updated_at: new Date() })));
     console.log("Demo test created and open for 24 hours. Candidate logins:");
     for (const c of creds) console.log(`  ${c.username}  ${c.password}`);
   } finally {

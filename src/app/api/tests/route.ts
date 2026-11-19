@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/server/auth";
 import { db, oid } from "@/lib/server/db";
 import { handle, ok } from "@/lib/server/http";
+import { describeLockout, lockoutStatus } from "@/lib/server/lockout";
 import { attemptState, scoreOf, testWindow, totalMarks, type AttemptDoc, type TestDoc } from "@/lib/server/models";
 
 export const dynamic = "force-dynamic";
@@ -22,10 +23,13 @@ export const GET = handle(async () => {
     .toArray();
   const byTest = new Map(attempts.map((a) => [String(a.test_id), a]));
   const now = new Date();
+  const lock = await lockoutStatus(d, userId, now);
 
   return ok({
     server_time: now.toISOString(),
     user,
+    lockout: lock,
+    lockout_message: lock.allowed ? "" : describeLockout(lock),
     tests: tests.map((t) => {
       const a = byTest.get(String(t._id)) ?? null;
       const state = attemptState(a, now);
@@ -42,7 +46,7 @@ export const GET = handle(async () => {
         problem_count: t.problems.length,
         total_marks: totalMarks(t),
         proctored: t.proctored,
-        can_start: window === "live" && (state === "not_started" || state === "in_progress"),
+        can_start: window === "live" && (state === "in_progress" || (state === "not_started" && (!t.proctored || lock.allowed))),
         score,
       };
     }),

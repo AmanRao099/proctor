@@ -30,37 +30,18 @@ function status(r: Row): { label: string; tone: "neutral" | "accent" | "ok" | "w
   return { label: "Closed", tone: "ok" };
 }
 
-export default function AdminTestsPage() {
+export function TestsList() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [judge, setJudge] = useState<{ ok: boolean; version?: string; error?: string } | null>(null);
 
   useEffect(() => {
     api.get<{ tests: Row[] }>("/api/admin/tests")
       .then((r) => setRows(r.tests))
       .catch((e) => setError(e instanceof ApiError ? e.message : "Could not load tests."));
-    api.get<{ judge0: { ok: boolean; version?: string; error?: string } }>("/api/admin/health")
-      .then((r) => setJudge(r.judge0))
-      .catch(() => setJudge({ ok: false, error: "Health check failed" }));
   }, []);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tests</h1>
-          <p className="mt-1 text-sm text-muted">
-            Code runner:{" "}
-            {judge === null ? "checking" : judge.ok
-              ? <span className="text-ok">reachable{judge.version ? ` (Judge0 ${judge.version})` : ""}</span>
-              : <span className="text-bad">unreachable. {judge.error}</span>}
-          </p>
-        </div>
-        <Link href="/admin/tests/new">
-          <Button variant="primary"><Plus size={16} /> New test</Button>
-        </Link>
-      </div>
-
+    <div className="flex flex-col gap-6">
       {error ? <Notice tone="bad" title="Could not load tests">{error}</Notice> : null}
 
       {rows === null && !error ? (

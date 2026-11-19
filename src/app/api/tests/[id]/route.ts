@@ -1,3 +1,4 @@
+import { describeLockout, lockoutStatus } from "@/lib/server/lockout";
 import { candidateTest } from "@/lib/server/candidate";
 import { handle, ok } from "@/lib/server/http";
 import { attemptState, testWindow, totalMarks, type AttemptDoc } from "@/lib/server/models";
@@ -18,6 +19,8 @@ export const GET = handle(async (_req: Request, ctx: Ctx) => {
   const proctoring = normalizeProctoring(c.test.proctoring);
   const state = attemptState(a, now);
   const window = testWindow(c.test, now);
+  const lock = await lockoutStatus(c.d, c.userId, now);
+  const locked = c.test.proctored && state === "not_started" && !lock.allowed;
   return ok({
     server_time: now.toISOString(),
     test: {
@@ -33,7 +36,9 @@ export const GET = handle(async (_req: Request, ctx: Ctx) => {
       camera_required: cameraRequired(c.test.proctored, proctoring),
       window,
       state,
-      can_start: window === "live" && (state === "not_started" || state === "in_progress"),
+      can_start: window === "live" && !locked && (state === "not_started" || state === "in_progress"),
+      lockout_message: locked ? describeLockout(lock) : "",
+      followup_prompt: c.test.followup?.prompt ?? "",
     },
     proctoring,
   });

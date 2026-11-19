@@ -1,5 +1,6 @@
 import { MongoServerError } from "mongodb";
 import { candidateTest } from "@/lib/server/candidate";
+import { describeLockout, lockoutStatus } from "@/lib/server/lockout";
 import { handle, HttpError, ok } from "@/lib/server/http";
 import { testWindow, toPaperProblem, type AttemptDoc } from "@/lib/server/models";
 import { normalizeProctoring } from "@/lib/shared/proctoring";
@@ -24,6 +25,11 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
     const window = testWindow(c.test, now);
     if (window === "upcoming") throw new HttpError(409, "This test has not opened yet.", "upcoming");
     if (window === "ended") throw new HttpError(409, "This test has closed.", "ended");
+    // The lockout gates STARTING a proctored test, never resuming one.
+    if (c.test.proctored) {
+      const lock = await lockoutStatus(c.d, c.userId, now);
+      if (!lock.allowed) throw new HttpError(423, describeLockout(lock), lock.banned ? "banned" : "cooldown");
+    }
     const fresh: Omit<AttemptDoc, "_id"> = {
       test_id: c.test._id,
       user_id: c.userId,
@@ -74,6 +80,7 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
       started_at: a.started_at.toISOString(),
       expires_at: a.expires_at.toISOString(),
       remaining_seconds: remaining,
+      followup_prompt: c.test.followup?.prompt ?? "",
     },
     proctoring: normalizeProctoring(c.test.proctoring),
     problems: c.test.problems.map(toPaperProblem),

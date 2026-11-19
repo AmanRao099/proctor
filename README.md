@@ -60,7 +60,31 @@ talks to Judge0; only the server does, with the token from the environment.
 - **Throttling.** One judge request per attempt every 3 seconds. Five wrong passwords lock a username for 15 minutes.
 - **Results withheld.** With "Show scores" off, Submit only says the code was recorded.
 
-### Proctoring
+### Admin console (MyCodeBud parity)
+
+Sidebar, grouped like MyCodeBud's admin:
+
+| Page | What it does |
+| --- | --- |
+| Overview | Students, signed in today, writing now, hand-ins, average score, pass rate, flagged attempts, pending appeals; live and upcoming tests; latest hand-ins |
+| Active Students | Everyone writing right now, from a 15 s heartbeat: current problem, marks so far, time left, camera / fullscreen / focus / face status, last violation, "no signal" after 45 s |
+| Leaderboard | Overall standing across all tests (share of available marks), or any test's live board |
+| DSA Master | Round Analytics (participation, average / median / top, pass rate on best attempt, score bands 0-39 / 40-59 / 60-79 / 80-100), Test Results (live board + result sheet), Integrity (per student, every incident with time into the attempt, strikes and cooldown), Performance Groups (strong at 70%+ over 4+ test cases, needs work at 40% or below, by difficulty and topic, per test), Problems (the bank), Schedule Test |
+| Students | Bulk accounts with generated passwords, reset, disable |
+| Ban Appeals | Barred students' appeals beside their strike history; approve forgives strikes (stamped, never deleted) |
+| Reports | Result sheet PDF / CSV, per-student performance report PDF (rank, percentile, radar vs cohort, per-problem vs cohort average, proctoring record, follow-up, code), submissions log CSV |
+| Settings | Default proctoring for new tests (optionally pushed to running tests), live microphone meter, lockout ladder on/off, pass mark |
+
+A student row on any board opens their report: rank, percentile, six-axis radar (score, accuracy, completion, speed, percentile, integrity) against the cohort, per-problem radar for 3+ problems, code behind each score, the violation log, PDF download and Reset attempt.
+
+### Proctoring rules ported from MyCodeBud
+
+- **Lockout ladder** (`src/lib/server/lockout.ts`): a hand-in the proctor forced is a strike. 1st 15 min, 2nd 1 h, 3rd 6 h, 4th 24 h, 5th barred until an appeal is approved. Strikes decay after 30 days. Only blocks STARTING a proctored test, never a running one. The server checks its own violation count before filing a strike.
+- **Follow-up question**: optional one-line question per test, answered in the hand-in dialog (required to hand in manually), graded number-aware / case-blind, stored beside the score, never added to it.
+- **Live settings**: admin changes to a test's proctoring reach running candidates within 30 s.
+- **Strikes persisted as they happen** and restored after a reload; a reload at the limit hands in.
+
+### Proctoring engine
 
 Ported from MyCodeBud. MediaPipe models and wasm are self-hosted in `public/vendor/mediapipe`; Monaco is self-hosted from `node_modules` into `public/vendor/monaco` by `scripts/copy-monaco.mjs`. No CDN is needed on test day.
 

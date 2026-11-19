@@ -29,6 +29,12 @@ interface FinalResult {
 }
 
 const AUTOSAVE_MS = 2000;
+
+interface HandInResponse {
+  results_hidden: boolean;
+  result: FinalResult | null;
+  lockout: { allowed: boolean; banned: boolean; cooldown_seconds_remaining: number } | null;
+}
 const SETTINGS_POLL_MS = 30_000;
 const VIOLATION_RESEND_MS = 15_000;
 
@@ -68,6 +74,10 @@ export default function ExamPage() {
   const [canResend, setCanResend] = useState(false);
   const [resending, setResending] = useState(false);
 
+  const [followupAnswer, setFollowupAnswer] = useState("");
+  const followupRef = useRef("");
+  followupRef.current = followupAnswer;
+  const [lockNote, setLockNote] = useState<string | null>(null);
   const [critical, setCritical] = useState<Violation | null>(null);
   const [warning, setWarning] = useState<Violation | null>(null);
 
@@ -231,6 +241,25 @@ export default function ExamPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started, finished, id]);
 
+  // ── Heartbeat for the admin's Active Students board ───────────────────────
+  const psRef = useRef(ps);
+  psRef.current = ps;
+  useEffect(() => {
+    if (!started || finished) return;
+    const beat = () => {
+      api.post(`/api/tests/${id}/heartbeat`, {
+        current_index: currentRef.current,
+        camera_live: psRef.current.cameraLive,
+        fullscreen: isFullscreen(),
+        focused: document.hasFocus(),
+        face_status: psRef.current.faceStatus,
+      }).catch(() => { /* next beat */ });
+    };
+    beat();
+    const t = window.setInterval(beat, 15_000);
+    return () => window.clearInterval(t);
+  }, [started, finished, id]);
+
   // ── Hand-in ───────────────────────────────────────────────────────────────
   const handInPayload = useRef<unknown>(null);
 
@@ -238,7 +267,7 @@ export default function ExamPage() {
     let last: unknown;
     for (let i = 0; i < 3; i++) {
       try {
-        return await api.post<{ results_hidden: boolean; result: FinalResult | null }>(`/api/tests/${id}/finish`, handInPayload.current, 180_000);
+        return await api.post<HandInResponse>(`/api/tests/${id}/finish`, handInPayload.current, 180_000);
       } catch (err) {
         last = err;
         if (err instanceof ApiError && err.status > 0 && err.status < 500) throw err;
@@ -248,8 +277,13 @@ export default function ExamPage() {
     throw last;
   }, [id]);
 
-  const settle = useCallback((res: { results_hidden: boolean; result: FinalResult | null }) => {
+  const settle = useCallback((res: HandInResponse) => {
     setHandInError(null);
+    if (res.lockout && !res.lockout.allowed) {
+      setLockNote(res.lockout.banned
+        ? "This was a forced hand-in. Your account is now barred from proctored tests until an organiser approves an appeal from your dashboard."
+        : `This was a forced hand-in, so you cannot start another proctored test for ${Math.ceil(res.lockout.cooldown_seconds_remaining / 60)} minutes.`);
+    }
     setCanResend(false);
     setResultsHidden(res.results_hidden);
     setFinal(res.result);
@@ -285,6 +319,7 @@ export default function ExamPage() {
       violations: ps.violations,
       auto_submitted: dueToViolation || ps.autoSubmitted,
       submitted_due_to_violation: dueToViolation,
+      followup_answer: followupRef.current.trim() || undefined,
     };
     try {
       settle(await send());
@@ -420,6 +455,7 @@ export default function ExamPage() {
                   ? `It was handed in automatically after ${ps.violationCount} recorded violations.`
                   : "Your answers are saved. You can close this window."}
               </p>
+              {lockNote ? <div className="mt-5"><Notice tone="warn" title="Lockout">{lockNote}</Notice></div> : null}
               {final && !resultsHidden ? (
                 <div className="mt-8 rounded-ui border border-line bg-surface">
                   <div className="flex items-baseline justify-between border-b border-line px-5 py-4">
@@ -629,7 +665,7 @@ export default function ExamPage() {
         footer={
           <>
             <Button onClick={() => setConfirmOpen(false)}>Keep working</Button>
-            <Button variant="primary" onClick={() => void finish(false)}>Hand in</Button>
+            <Button variant="primary" disabled={!!paper.test.followup_prompt && !followupAnswer.trim()} onClick={() => void finish(false)}>Hand in</Button>
           </>
         }
       >
@@ -649,6 +685,21 @@ export default function ExamPage() {
             );
           })}
         </ul>
+        {paper.test.followup_prompt ? (
+          <div className="mt-4 grid gap-1.5">
+            <label htmlFor="followup" className="text-[13px] font-medium text-ink">{paper.test.followup_prompt}</label>
+            <input
+              id="followup"
+              value={followupAnswer}
+              onChange={(e) => setFollowupAnswer(e.target.value)}
+              maxLength={100}
+              autoComplete="off"
+              className="h-10 rounded-ui border border-line-strong bg-surface px-3 text-sm text-ink focus:border-accent focus:outline-none"
+              placeholder="Your answer"
+            />
+            <p className="text-xs text-muted">Answer this to hand in.</p>
+          </div>
+        ) : null}
         <p className="mt-3 text-xs text-muted">{solvedCount} of {problems.length} {withheld ? "submitted" : "fully solved"} | {formatDuration(timeLeft)} left</p>
       </Dialog>
     </div>

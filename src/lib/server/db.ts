@@ -49,6 +49,15 @@ async function ensureIndexes(d: Db) {
     d.collection("attempts").createIndex({ test_id: 1, expires_at: 1, submitted_at: 1 }),
     d.collection("submissions").createIndex({ attempt_id: 1, at: -1 }),
     d.collection("login_throttle").createIndex({ until: 1 }, { expireAfterSeconds: 0 }),
+    d.collection("attempts").createIndex({ submitted_at: 1, expires_at: 1 }),
+    // One strike per forced hand-in, however often the hand-in is retried.
+    d.collection("proctor_strikes").createIndex({ attempt_id: 1 }, { unique: true }),
+    d.collection("proctor_strikes").createIndex({ user_id: 1, occurred_at: 1 }),
+    d.collection("ban_appeals").createIndex(
+      { user_id: 1 },
+      { unique: true, partialFilterExpression: { status: "pending" }, name: "one_open_appeal_per_user" },
+    ),
+    d.collection("problems").createIndex({ is_deleted: 1, created_at: -1 }),
   ]);
 }
 

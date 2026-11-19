@@ -4,23 +4,25 @@ import { Field, Input, Select, Toggle } from "@/components/ui";
 import { LEVEL_LABELS, SENSITIVITY_LEVELS, type ProctoringSettings, type SensitivityLevel } from "@/lib/shared/proctoring";
 
 export function ProctoringForm({
-  value, onChange, proctored, setProctored,
+  value, onChange, proctored, setProctored, hideMaster,
 }: {
   value: ProctoringSettings;
   onChange: (v: ProctoringSettings) => void;
   proctored: boolean;
   setProctored: (v: boolean) => void;
+  /** Settings page: the defaults are always "proctored". */
+  hideMaster?: boolean;
 }) {
   const set = <K extends keyof ProctoringSettings>(k: K, v: ProctoringSettings[K]) => onChange({ ...value, [k]: v });
   const off = !proctored;
   return (
     <div className="grid gap-6">
-      <Toggle
+      {hideMaster ? null : <Toggle
         checked={proctored}
         onChange={setProctored}
         label="Proctor this test"
         description="Off: no camera, no fullscreen lock, no tab-switch strikes. Paste stays blocked."
-      />
+      />}
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-ui border border-line bg-bg p-4">

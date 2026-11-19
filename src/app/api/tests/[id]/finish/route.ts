@@ -2,8 +2,10 @@ import { z } from "zod";
 import { candidateTest, HAND_IN_GRACE_MS, openAttempt } from "@/lib/server/candidate";
 import { body, handle, HttpError, ok } from "@/lib/server/http";
 import { judge } from "@/lib/server/judge";
-import { scoreOf, type AttemptDoc, type BestDoc } from "@/lib/server/models";
+import { lockoutStatus, recordStrike } from "@/lib/server/lockout";
+import { followupCorrect, scoreOf, type AttemptDoc, type BestDoc } from "@/lib/server/models";
 import { isLanguage } from "@/lib/shared/languages";
+import { normalizeProctoring } from "@/lib/shared/proctoring";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -17,6 +19,8 @@ const schema = z.object({
   })).max(500).default([]),
   auto_submitted: z.boolean().default(false),
   submitted_due_to_violation: z.boolean().default(false),
+  /** Reply to the test's follow-up question. Optional: a timer or the proctor hands in with nobody to answer. */
+  followup_answer: z.string().max(200).optional(),
 });
 
 /**
@@ -33,6 +37,10 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
 
   const known = new Set((a.violations || []).map((v) => v.id));
   const fresh = input.violations.filter((v) => !known.has(v.id));
+  const given = (input.followup_answer ?? "").split(/\s+/).join(" ").trim().slice(0, 100);
+  const followup = c.test.followup && given
+    ? { answer: given, correct: followupCorrect(given, c.test.followup.answer) }
+    : null;
   const claim = await attempts.updateOne(
     { _id: a._id, submitted_at: null },
     {
@@ -40,6 +48,7 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
         submitted_at: now,
         auto_submitted: input.auto_submitted,
         submitted_due_to_violation: input.submitted_due_to_violation,
+        followup,
       },
       ...(fresh.length ? {
         $push: { violations: { $each: fresh, $slice: -500 } },
@@ -48,6 +57,24 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
     } as never,
   );
   if (!claim.matchedCount) throw new HttpError(409, "You have already handed in this test.", "submitted");
+
+  // A hand-in the proctor forced is a strike on the lockout ladder. The
+  // server's own violation count must agree it reached the limit, so a client
+  // cannot file a strike against itself by accident (or skip one by lying the
+  // other way: the count is the server's, not the flag's).
+  const allViolations = [...(a.violations || []), ...fresh];
+  const limit = normalizeProctoring(c.test.proctoring).max_violations;
+  let lockout = null;
+  if (c.test.proctored && input.submitted_due_to_violation && allViolations.length >= limit) {
+    await recordStrike(c.d, {
+      userId: c.userId,
+      testId: c.test._id,
+      attemptId: a._id,
+      violationCount: allViolations.length,
+      violationTypes: allViolations.map((v) => v.description),
+    });
+    lockout = await lockoutStatus(c.d, c.userId);
+  }
 
   // Judge final code that was never submitted as-is. Sequential on purpose:
   // the Judge0 box is shared and a whole room hands in at the same second.
@@ -76,6 +103,7 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
           at: now,
         };
         updates[`best.${problem.id}`] = best[problem.id];
+        updates.last_improved_at = now;
       }
     } catch (err) {
       // The hand-in already counts; a runner failure only means the last
@@ -87,8 +115,9 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
   const final = scoreOf({ ...a, best } as AttemptDoc, c.test);
   await attempts.updateOne({ _id: a._id }, { $set: { ...updates, final } });
 
-  if (!c.test.show_results) return ok({ results_hidden: true, result: null });
+  if (!c.test.show_results) return ok({ results_hidden: true, result: null, lockout });
   return ok({
+    lockout,
     results_hidden: false,
     result: {
       ...final,
