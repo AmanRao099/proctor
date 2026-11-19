@@ -4,7 +4,7 @@ import { requireUser } from "./auth";
 import { db, ObjectId, oid } from "./db";
 import { HttpError } from "./http";
 import { HAND_IN_GRACE_MS, isAssigned, type AttemptDoc, type TestDoc } from "./models";
-import type { SessionUser } from "@/lib/shared/types";
+import type { SessionUser, Violation } from "@/lib/shared/types";
 
 export interface CandidateCtx {
   d: Db;
@@ -53,6 +53,27 @@ export async function claimJudgeSlot(ctx: CandidateCtx, a: AttemptDoc, gapMs = 3
     { $set: { last_judge_at: now } },
   );
   if (!res.matchedCount) throw new HttpError(429, "Your previous run is still being judged. Try again in a moment.");
+}
+
+/**
+ * Add violations to an attempt, ATOMICALLY de-duplicated.
+ *
+ * The client re-sends its whole list (on every new strike, on a 15 s timer,
+ * and with the hand-in), so the same violation often arrives in two requests
+ * at once. A read-then-push let both through and stored it twice; the live
+ * proctoring test caught 6 stored for 5 shown. $addToSet compares the whole
+ * (normalised) entry inside the database, so each one is stored once however
+ * the requests race, and the count is recomputed from the array itself.
+ */
+export async function mergeViolations(d: Db, attemptId: ObjectId, list: Violation[]): Promise<number> {
+  const attempts = d.collection<AttemptDoc>("attempts");
+  if (list.length) {
+    const clean = list.slice(0, 500).map((v) => ({ id: v.id, type: v.type, description: v.description, timestamp: v.timestamp }));
+    await attempts.updateOne({ _id: attemptId }, { $addToSet: { violations: { $each: clean } } });
+  }
+  await attempts.updateOne({ _id: attemptId }, [{ $set: { violation_count: { $size: { $ifNull: ["$violations", []] } } } }]);
+  const a = await attempts.findOne({ _id: attemptId }, { projection: { violation_count: 1 } });
+  return a?.violation_count ?? 0;
 }
 
 export { HAND_IN_GRACE_MS };

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { candidateTest, HAND_IN_GRACE_MS, openAttempt } from "@/lib/server/candidate";
+import { candidateTest, HAND_IN_GRACE_MS, mergeViolations, openAttempt } from "@/lib/server/candidate";
 import { body, handle, HttpError, ok } from "@/lib/server/http";
 import { judge } from "@/lib/server/judge";
 import { lockoutStatus, recordStrike } from "@/lib/server/lockout";
@@ -35,8 +35,6 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
   const attempts = c.d.collection<AttemptDoc>("attempts");
   const now = new Date();
 
-  const known = new Set((a.violations || []).map((v) => v.id));
-  const fresh = input.violations.filter((v) => !known.has(v.id));
   const given = (input.followup_answer ?? "").split(/\s+/).join(" ").trim().slice(0, 100);
   const followup = c.test.followup && given
     ? { answer: given, correct: followupCorrect(given, c.test.followup.answer) }
@@ -50,10 +48,6 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
         submitted_due_to_violation: input.submitted_due_to_violation,
         followup,
       },
-      ...(fresh.length ? {
-        $push: { violations: { $each: fresh, $slice: -500 } },
-        $inc: { violation_count: fresh.length },
-      } : {}),
     } as never,
   );
   if (!claim.matchedCount) throw new HttpError(409, "You have already handed in this test.", "submitted");
@@ -62,15 +56,17 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
   // server's own violation count must agree it reached the limit, so a client
   // cannot file a strike against itself by accident (or skip one by lying the
   // other way: the count is the server's, not the flag's).
-  const allViolations = [...(a.violations || []), ...fresh];
+  const violationCount = await mergeViolations(c.d, a._id, input.violations);
+  const stored = await attempts.findOne({ _id: a._id }, { projection: { violations: 1 } });
+  const allViolations = stored?.violations ?? [];
   const limit = normalizeProctoring(c.test.proctoring).max_violations;
   let lockout = null;
-  if (c.test.proctored && input.submitted_due_to_violation && allViolations.length >= limit) {
+  if (c.test.proctored && input.submitted_due_to_violation && violationCount >= limit) {
     await recordStrike(c.d, {
       userId: c.userId,
       testId: c.test._id,
       attemptId: a._id,
-      violationCount: allViolations.length,
+      violationCount,
       violationTypes: allViolations.map((v) => v.description),
     });
     lockout = await lockoutStatus(c.d, c.userId);

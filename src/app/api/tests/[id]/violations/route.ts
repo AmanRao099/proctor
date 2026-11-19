@@ -1,8 +1,7 @@
 import { z } from "zod";
-import { candidateTest, HAND_IN_GRACE_MS } from "@/lib/server/candidate";
+import { candidateTest, HAND_IN_GRACE_MS, mergeViolations } from "@/lib/server/candidate";
 import { body, handle, HttpError, ok } from "@/lib/server/http";
 import type { AttemptDoc } from "@/lib/server/models";
-import type { Violation } from "@/lib/shared/types";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -30,13 +29,6 @@ export const POST = handle(async (req: Request, ctx: Ctx) => {
   if (late) throw new HttpError(409, "This attempt is closed.");
 
   const { violations } = await body(req, schema);
-  const known = new Set((a.violations || []).map((v) => v.id));
-  const fresh: Violation[] = violations.filter((v) => !known.has(v.id));
-  if (fresh.length) {
-    await attempts.updateOne(
-      { _id: a._id },
-      { $push: { violations: { $each: fresh, $slice: -500 } }, $inc: { violation_count: fresh.length } },
-    );
-  }
-  return ok({ recorded: (a.violations?.length ?? 0) + fresh.length });
+  const recorded = await mergeViolations(c.d, a._id, violations);
+  return ok({ recorded });
 });
